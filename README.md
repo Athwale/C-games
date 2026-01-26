@@ -1,2 +1,4 @@
 # C-games
-A collection of terminal games in C
+A collection of terminal games in C.
+
+1. snake
