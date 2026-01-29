@@ -10,6 +10,8 @@
 // todo check sqrt and add if needed.
 // todo malloc for some array free + set to null , calloc sets allocated space to 0;
 
+// Compiling: clear; cc snake.c -o snake -lncurses; ./snake
+
 #define SIZE 40
 #define HEAD_POS 20
 #define WIN_LENGTH 15
