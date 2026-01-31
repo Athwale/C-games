@@ -3,7 +3,9 @@
 #include <unistd.h>
 
 bool initialized = false;
-WINDOW *win;
+WINDOW *win; //Main screen, whole terminal
+WINDOW *sub; //Child window
+
 
 bool draw_field(const int x_length, const int y_length, const char area[x_length][y_length]) {
     if (!initialized) {
@@ -13,7 +15,7 @@ bool draw_field(const int x_length, const int y_length, const char area[x_length
 
     for (int i = 0; i < x_length; i++) {
         for (int j = 0; j < y_length; j++) {
-            mvaddch(i, j, area[i][j]);
+            mvwaddch(sub, i+1, j+2, area[i][j]);
         }
     }
 
@@ -28,12 +30,20 @@ void start() {
         fprintf(stderr, "Error initialising ncurses.\n");
         exit(EXIT_FAILURE);
     }
-    cbreak();
     noecho();
+    // Enable arrow keys.
+    keypad(win, TRUE);
+
+    // Win is the parent. Height, width, x, y
+    // Todo calculate and put in the middle of the screen.
+    sub = subwin(win, 20, 20, 2, 2);
+    // Add border.
+    box(sub, 0, 0);
     initialized = true;
 }
 
 void end() {
+    delwin(sub);
     delwin(win);
     endwin();
     refresh();
@@ -51,7 +61,7 @@ int main(void) {
     }
 
     draw_field(10, 10, arr);
-    sleep(3);
+    sleep(2);
 
     end();
     return EXIT_SUCCESS;
