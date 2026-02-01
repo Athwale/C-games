@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define SIZE 20
+
 bool initialized = false;
 WINDOW *win; //Main screen, whole terminal
 WINDOW *sub; //Child window
@@ -12,6 +14,13 @@ bool draw_field(const int x_length, const int y_length, const char area[x_length
         fprintf(stderr,"start() must be called first");
         exit(EXIT_FAILURE);
     }
+
+    // Win is the parent. Height, width, x, y
+    // Todo calculate and put in the middle of the screen.
+    // X vertical, Y horizontal
+    sub = subwin(win, x_length + 2, y_length + 4, 0, 0);
+    // Add border.
+    box(sub, 0, 0);
 
     for (int i = 0; i < x_length; i++) {
         for (int j = 0; j < y_length; j++) {
@@ -25,7 +34,6 @@ bool draw_field(const int x_length, const int y_length, const char area[x_length
 
 void start() {
     // Init ncurses.
-
     if ((win = initscr()) == NULL ) {
         fprintf(stderr, "Error initialising ncurses.\n");
         exit(EXIT_FAILURE);
@@ -33,12 +41,6 @@ void start() {
     noecho();
     // Enable arrow keys.
     keypad(win, TRUE);
-
-    // Win is the parent. Height, width, x, y
-    // Todo calculate and put in the middle of the screen.
-    sub = subwin(win, 20, 20, 2, 2);
-    // Add border.
-    box(sub, 0, 0);
     initialized = true;
 }
 
@@ -53,14 +55,14 @@ int main(void) {
     // Test functionality.
     start();
 
-    char arr[10][10] = {};
-    for (int i = 0; i < 10; i++) {
-        for (int j = 0; j < 10; j++) {
+    char arr[SIZE][SIZE] = {};
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
             arr[i][j] = '#';
         }
     }
 
-    draw_field(10, 10, arr);
+    draw_field(SIZE, SIZE, arr);
     sleep(2);
 
     end();
