@@ -14,11 +14,14 @@ bool draw_field(const int x_length, const int y_length, const char area[x_length
         fprintf(stderr,"start() must be called first");
         exit(EXIT_FAILURE);
     }
-
+    // COLS/LINES are set now.
+    // X vertical, Y horizontal.
+    int pos_y = (COLS / 2) - (y_length / 2);
+    int pos_x = (LINES / 2) - (x_length / 2);
+    printf("%dx%d", pos_x, pos_y);
     // Win is the parent. Height, width, x, y
-    // Todo calculate and put in the middle of the screen.
-    // X vertical, Y horizontal
-    sub = subwin(win, x_length + 2, y_length + 4, 0, 0);
+    sub = subwin(win, x_length + 2, y_length + 4, pos_x, pos_y);
+
     // Add border.
     box(sub, 0, 0);
 
