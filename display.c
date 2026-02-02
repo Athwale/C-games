@@ -18,15 +18,18 @@ bool draw_field(const int x_length, const int y_length, const char area[x_length
     // X vertical, Y horizontal.
     int pos_y = (COLS / 2) - (y_length / 2);
     int pos_x = (LINES / 2) - (x_length / 2);
-    printf("%dx%d", pos_x, pos_y);
     // Win is the parent. Height, width, x, y
     sub = subwin(win, x_length + 2, y_length + 4, pos_x, pos_y);
 
     // Add border.
+    if (has_colors()) {
+        wcolor_set(sub, 1, NULL);
+    }
     box(sub, 0, 0);
 
     for (int i = 0; i < x_length; i++) {
         for (int j = 0; j < y_length; j++) {
+            // todo add color does not work inside a sub window?
             mvwaddch(sub, i+1, j+2, area[i][j]);
         }
     }
@@ -44,6 +47,15 @@ void start() {
     noecho();
     // Enable arrow keys.
     keypad(win, TRUE);
+
+    start_color();
+    if (has_colors()) {
+        // Init some color pairs. Foreground, background
+        init_pair(1,  COLOR_RED,     COLOR_BLACK);
+        init_pair(2,  COLOR_GREEN,   COLOR_BLACK);
+        init_pair(3,  COLOR_YELLOW,  COLOR_BLACK);
+    }
+
     initialized = true;
 }
 
