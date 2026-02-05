@@ -4,8 +4,8 @@
 
 #define SIZE 20
 
-#define BORDER_COLOR 1
-#define SCORE_COLOR 2
+#define DEFAULT_BORDER_COLOR 1
+#define DEFAULT_SCORE_COLOR 2
 
 bool initialized = false;
 WINDOW *win; //Main screen, whole terminal
@@ -23,6 +23,13 @@ typedef struct element {
 } ELEMENT;
 
 // todo document all functions.
+// todo some stuff can be static.
+
+void set_current_color(WINDOW *window, const short color) {
+    if (has_colors()) {
+        wcolor_set(window, color, NULL);
+    }
+}
 
 bool draw_screen(const int x_length, const int y_length, const char area[x_length][y_length]) {
     if (!initialized) {
@@ -36,11 +43,10 @@ bool draw_screen(const int x_length, const int y_length, const char area[x_lengt
     // Win is the parent. Height, width, x, y
     sub = subwin(win, x_length + 2, y_length + 4, pos_x, pos_y);
 
-    // Add border.
-    if (has_colors()) {
-        wcolor_set(sub, BORDER_COLOR, NULL);
-    }
+    // Add border with color.
+    set_current_color(sub, border_color);
     box(sub, 0, 0);
+    set_current_color(sub, DEFAULT_BORDER_COLOR);
 
     for (int i = 0; i < x_length; i++) {
         for (int j = 0; j < y_length; j++) {
@@ -58,21 +64,28 @@ short add_color(const short foreground, const short background) {
         registered_colors++;
         if (registered_colors <= COLOR_PAIRS) {
             init_pair(registered_colors, foreground, background);
-            return  registered_colors;
+            return registered_colors;
         }
     }
     return -1;
 }
 
 void set_border_color(const short color_pair_number) {
-    // todo return error when use without adding a color first.
     if (has_colors()) {
+        if (registered_colors == 0) {
+            fprintf(stderr, "No colors have been added.\n");
+            exit(EXIT_FAILURE);
+        }
         border_color = color_pair_number;
     }
 }
 
 void set_score_color(const short color_pair_number) {
     if (has_colors()) {
+        if (registered_colors == 0) {
+            fprintf(stderr, "No colors have been added.\n");
+            exit(EXIT_FAILURE);
+        }
         score_color = color_pair_number;
     }
 }
@@ -90,8 +103,10 @@ void start() {
     if (has_colors()) {
         // Set some defaults.
         use_default_colors();
-        init_pair(BORDER_COLOR, COLOR_WHITE, -1);
-        init_pair(SCORE_COLOR, COLOR_WHITE, -1);
+        init_pair(DEFAULT_BORDER_COLOR, COLOR_WHITE, -1);
+        registered_colors++;
+        init_pair(DEFAULT_SCORE_COLOR, COLOR_WHITE, -1);
+        registered_colors++;
     }
     initialized = true;
 }
@@ -114,8 +129,9 @@ int main(void) {
         }
     }
 
-    // -1 uses the terminal default color.
-    set_border_color(COLOR_RED, -1);
+    // Use -1 for terminal background.
+    set_border_color(add_color(COLOR_RED, -1));
+    set_score_color(add_color(COLOR_GREEN, -1));
     draw_screen(SIZE, SIZE, arr);
     sleep(2);
 
