@@ -19,27 +19,30 @@ short border_color = 0;
 typedef struct element {
     unsigned int pos_x;
     unsigned int pos_y;
+    char shape;
     short color_pair;
 } ELEMENT;
 
 // todo document all functions.
 // todo some stuff can be static.
+// todo add configurable menu screen.
+// todo add configurable end screen.
 
-void set_current_color(WINDOW *window, const short color) {
+static void set_current_color(WINDOW *window, const short color) {
     if (has_colors()) {
         wcolor_set(window, color, NULL);
     }
 }
 
-bool draw_screen(const int x_length, const int y_length, const char area[x_length][y_length]) {
+bool draw_screen(const int x_length, const int y_length, const ELEMENT area[x_length][y_length], const char score[]) {
     if (!initialized) {
         fprintf(stderr,"start() must be called first");
         exit(EXIT_FAILURE);
     }
     // COLS/LINES are set now.
     // X vertical, Y horizontal.
-    const int pos_y = (COLS / 2) - (y_length / 2);
     const int pos_x = (LINES / 2) - (x_length / 2);
+    const int pos_y = (COLS / 2) - (y_length / 2);
     // Win is the parent. Height, width, x, y
     sub = subwin(win, x_length + 2, y_length + 4, pos_x, pos_y);
 
@@ -48,12 +51,18 @@ bool draw_screen(const int x_length, const int y_length, const char area[x_lengt
     box(sub, 0, 0);
     set_current_color(sub, DEFAULT_BORDER_COLOR);
 
+    // These coordinates are relative to the new window.
     for (int i = 0; i < x_length; i++) {
         for (int j = 0; j < y_length; j++) {
-            // todo add color to each element of the field individually using a two dimensional array of structs and typedef.
-            mvwaddch(sub, i+1, j+2, area[i][j]);
+            set_current_color(sub, area[i][j].color_pair);
+            mvwaddch(sub, i+1, j+2, area[i][j].shape);
         }
     }
+
+    set_current_color(win, score_color);
+    mvaddstr(pos_x + x_length + 2, pos_y, score);
+    set_current_color(sub, DEFAULT_SCORE_COLOR);
+
     refresh();
     return true;
 }
@@ -122,17 +131,21 @@ int main(void) {
     // Test functionality.
     start();
 
-    char arr[SIZE][SIZE] = {};
+    const short element_color = add_color(COLOR_YELLOW, -1);
+    ELEMENT arr[SIZE][SIZE] = {};
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
-            arr[i][j] = '#';
+            arr[i][j].pos_x = i;
+            arr[i][j].pos_y = j;
+            arr[i][j].shape = '$';
+            arr[i][j].color_pair = element_color;
         }
     }
 
     // Use -1 for terminal background.
     set_border_color(add_color(COLOR_RED, -1));
     set_score_color(add_color(COLOR_GREEN, -1));
-    draw_screen(SIZE, SIZE, arr);
+    draw_screen(SIZE, SIZE, arr, "SCORE LINE");
     sleep(2);
 
     end();
