@@ -8,8 +8,9 @@
 #define DEFAULT_SCORE_COLOR 2
 
 bool initialized = false;
-WINDOW *win; //Main screen, whole terminal
-WINDOW *sub; //Child window
+WINDOW *win; // Main screen, whole terminal
+WINDOW *play_area; // Playing field
+WINDOW *menu; // Menu window
 
 short registered_colors = 0;
 short score_color = 0;
@@ -34,7 +35,7 @@ static void set_current_color(WINDOW *window, const short color) {
     }
 }
 
-bool draw_screen(const int x_length, const int y_length, const ELEMENT area[x_length][y_length], const char score[]) {
+void draw_screen(const int x_length, const int y_length, const ELEMENT area[x_length][y_length], const char score[]) {
     if (!initialized) {
         fprintf(stderr,"start() must be called first");
         exit(EXIT_FAILURE);
@@ -44,28 +45,55 @@ bool draw_screen(const int x_length, const int y_length, const ELEMENT area[x_le
     const int pos_x = (LINES / 2) - (x_length / 2);
     const int pos_y = (COLS / 2) - (y_length / 2);
     // Win is the parent. Height, width, x, y
-    sub = subwin(win, x_length + 2, y_length + 4, pos_x, pos_y);
+    play_area = subwin(win, x_length + 2, y_length + 4, pos_x, pos_y);
 
     // Add border with color.
-    set_current_color(sub, border_color);
-    box(sub, 0, 0);
-    set_current_color(sub, DEFAULT_BORDER_COLOR);
+    set_current_color(play_area, border_color);
+    box(play_area, 0, 0);
+    set_current_color(play_area, DEFAULT_BORDER_COLOR);
 
     // These coordinates are relative to the new window.
     for (int i = 0; i < x_length; i++) {
         for (int j = 0; j < y_length; j++) {
-            set_current_color(sub, area[i][j].color_pair);
-            mvwaddch(sub, i+1, j+2, area[i][j].shape);
+            set_current_color(play_area, area[i][j].color_pair);
+            mvwaddch(play_area, i+1, j+2, area[i][j].shape);
         }
     }
 
     set_current_color(win, score_color);
     mvaddstr(pos_x + x_length + 2, pos_y, score);
-    set_current_color(sub, DEFAULT_SCORE_COLOR);
+    set_current_color(play_area, DEFAULT_SCORE_COLOR);
 
     refresh();
-    return true;
 }
+
+void draw_menu(const int count, char **items) {
+    if (!initialized) {
+        fprintf(stderr,"start() must be called first");
+        exit(EXIT_FAILURE);
+    }
+
+    // todo center the window, set width to longest string
+    // Win is the parent. Height, width, x, y
+    menu = subwin(win, count + 2, 20, 10, 10);
+
+    // Add border with color.
+    set_current_color(menu, border_color);
+    box(menu, 0, 0);
+    set_current_color(menu, DEFAULT_BORDER_COLOR);
+
+    // These coordinates are relative to the new window.
+    for (int i = 0; i < count; i++) {
+        mvwaddstr(menu, i+1, 1, items[i]);
+    }
+    refresh();
+
+    sleep(2);
+
+    wclear(menu);
+    delwin(menu);
+}
+
 
 short add_color(const short foreground, const short background) {
     // todo test 257
@@ -121,7 +149,7 @@ void start() {
 }
 
 void end() {
-    delwin(sub);
+    delwin(play_area);
     delwin(win);
     endwin();
     refresh();
@@ -142,11 +170,18 @@ int main(void) {
         }
     }
 
+    char *menu_items[3];
+    menu_items[0] = "test1";
+    menu_items[1] = "test2";
+    menu_items[2] = "test3";
+
     // Use -1 for terminal background.
     set_border_color(add_color(COLOR_RED, -1));
     set_score_color(add_color(COLOR_GREEN, -1));
+
+    draw_menu(3, menu_items);
     draw_screen(SIZE, SIZE, arr, "SCORE LINE");
-    sleep(2);
+    sleep(1);
 
     end();
     return EXIT_SUCCESS;
