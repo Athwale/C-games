@@ -67,14 +67,13 @@ void draw_screen(const int x_length, const int y_length, const ELEMENT area[x_le
     refresh();
 }
 
-void draw_menu(const int count, char **items, int selected) {
+int draw_menu(const int count, char **items, int selected) {
     if (!initialized) {
         fprintf(stderr,"start() must be called first");
         exit(EXIT_FAILURE);
     }
 
     // todo center the window, set width to longest string
-    // todo arrows for selection.
     // Win is the parent. Height, width, x, y
     menu = subwin(win, count + 2, 20, 10, 10);
     keypad(menu, TRUE);
@@ -85,6 +84,7 @@ void draw_menu(const int count, char **items, int selected) {
     set_current_color(menu, DEFAULT_BORDER_COLOR);
 
     int ch = '\0';
+    bool confirmed = false;
     do {
         if (ch == KEY_UP) {
             selected--;
@@ -93,14 +93,12 @@ void draw_menu(const int count, char **items, int selected) {
             }
         } else if (ch == KEY_DOWN) {
             selected++;
-            if (selected >= count) {
-                selected = count;
+            if (selected >= count - 1) {
+                selected = count - 1;
             }
+        } else if (ch == KEY_ENTER || ch == 10) {
+            confirmed = true;
         }
-
-        char debug[500] = {};
-        sprintf(debug, "%d/%d", selected, count);
-        mvaddstr(10, 10, debug);
 
         // These coordinates are relative to the new window.
         for (int i = 0; i < count; i++) {
@@ -111,11 +109,15 @@ void draw_menu(const int count, char **items, int selected) {
             wattroff(menu, A_STANDOUT);
         }
         wrefresh(menu);
-    } while((ch = wgetch(menu)) != 'q');
 
-    // todo do this once the user is done
-    wclear(menu);
-    delwin(menu);
+        if (confirmed) {
+            wclear(menu);
+            delwin(menu);
+            return selected;
+        }
+
+    } while((ch = wgetch(menu)) != 'q');
+    return -1;
 }
 
 short add_color(const short foreground, const short background) {
@@ -202,7 +204,8 @@ int main(void) {
     set_border_color(add_color(COLOR_RED, -1));
     set_score_color(add_color(COLOR_GREEN, -1));
 
-    draw_menu(3, menu_items, 0);
+    int result = draw_menu(3, menu_items, 0);
+    printf("%d", result);
     draw_screen(SIZE, SIZE, arr, "SCORE LINE");
     sleep(1);
 
