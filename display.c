@@ -1,5 +1,6 @@
 #include <ncurses.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #define SIZE 20
@@ -73,9 +74,18 @@ int draw_menu(const int count, char **items, int selected) {
         exit(EXIT_FAILURE);
     }
 
-    // todo center the window, set width to longest string
+    // todo handle resizing?
+    unsigned long max_len = 0;
+    for (int i = 0; i < count; i++) {
+        if (max_len < strlen(items[i])) {
+            max_len = strlen(items[i]);
+        }
+    }
+
+    const int pos_x = (LINES / 2) - (count / 2);
+    const int pos_y = (COLS / 2) - ((int)max_len / 2);
     // Win is the parent. Height, width, x, y
-    menu = subwin(win, count + 2, 20, 10, 10);
+    menu = subwin(win, count + 2, (int)max_len + 2, pos_x, pos_y);
     keypad(menu, TRUE);
 
     // Add border with color.
@@ -117,6 +127,8 @@ int draw_menu(const int count, char **items, int selected) {
         }
 
     } while((ch = wgetch(menu)) != 'q');
+    wclear(menu);
+    delwin(menu);
     return -1;
 }
 
@@ -195,17 +207,19 @@ int main(void) {
         }
     }
 
-    char *menu_items[3];
+    char *menu_items[5];
     menu_items[0] = "test1";
     menu_items[1] = "test2";
     menu_items[2] = "test3";
+    menu_items[3] = "test4";
+    menu_items[4] = "test5 test ehwifgweujlkhgwerluwjeyhverwrwvebruolrewyvbe";
 
     // Use -1 for terminal background.
     set_border_color(add_color(COLOR_RED, -1));
     set_score_color(add_color(COLOR_GREEN, -1));
 
-    int result = draw_menu(3, menu_items, 0);
-    printf("%d", result);
+    int result = draw_menu(5, menu_items, 0);
+    printf(" %d ", result);
     draw_screen(SIZE, SIZE, arr, "SCORE LINE");
     sleep(1);
 
