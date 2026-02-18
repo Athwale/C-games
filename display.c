@@ -12,6 +12,7 @@ bool initialized = false;
 WINDOW *win; // Main screen, whole terminal
 WINDOW *play_area; // Playing field
 WINDOW *menu; // Menu window
+WINDOW *endscreen; // Menu window
 
 short registered_colors = 0;
 short score_color = 0;
@@ -27,8 +28,6 @@ typedef struct element {
 
 // todo document all functions.
 // todo some stuff can be static.
-// todo add configurable menu screen.
-// todo add configurable end screen.
 
 static void set_current_color(WINDOW *window, const short color) {
     if (has_colors()) {
@@ -36,7 +35,7 @@ static void set_current_color(WINDOW *window, const short color) {
     }
 }
 
-void draw_screen(const int x_length, const int y_length, const ELEMENT area[x_length][y_length], const char score[]) {
+void draw_game_screen(const int x_length, const int y_length, const ELEMENT area[x_length][y_length], const char score[]) {
     if (!initialized) {
         fprintf(stderr,"start() must be called first");
         exit(EXIT_FAILURE);
@@ -64,7 +63,13 @@ void draw_screen(const int x_length, const int y_length, const ELEMENT area[x_le
     set_current_color(win, score_color);
     mvaddstr(pos_x + x_length + 2, pos_y, score);
     set_current_color(play_area, DEFAULT_SCORE_COLOR);
+    refresh();
+}
 
+void end_game_screen() {
+    wclear(play_area);
+    delwin(play_area);
+    wclear(win);
     refresh();
 }
 
@@ -130,6 +135,34 @@ int draw_menu(const int count, char **items, int selected) {
     wclear(menu);
     delwin(menu);
     return -1;
+}
+
+void draw_end_screen(const int score) {
+    if (!initialized) {
+        fprintf(stderr,"start() must be called first");
+        exit(EXIT_FAILURE);
+    }
+
+    char message[50] = {};
+    snprintf(message, 50, "Final score: %d", score);
+    // Vertical position:
+    const int pos_x = LINES / 2 - 2;
+    // Horizontal position:
+    const int pos_y = COLS / 2 - (int)strlen(message) / 2;
+    // Win is the parent. Height, width, x, y
+    endscreen = subwin(win, 4, (int)strlen(message) + 2, pos_x, pos_y);
+    keypad(endscreen, TRUE);
+
+    // Add border with color.
+    set_current_color(endscreen, border_color);
+    box(menu, 0, 0);
+    set_current_color(endscreen, DEFAULT_BORDER_COLOR);
+    mvwaddstr(endscreen, 1, 1, message);
+    mvwaddstr(endscreen, 2, 1, "Press any key");
+
+    wgetch(endscreen);
+    wclear(endscreen);
+    delwin(endscreen);
 }
 
 short add_color(const short foreground, const short background) {
@@ -220,8 +253,10 @@ int main(void) {
 
     int result = draw_menu(5, menu_items, 0);
     printf(" %d ", result);
-    draw_screen(SIZE, SIZE, arr, "SCORE LINE");
+    draw_game_screen(SIZE, SIZE, arr, "SCORE LINE");
     sleep(1);
+    end_game_screen();
+    draw_end_screen(1000000000);
 
     end();
     return EXIT_SUCCESS;
