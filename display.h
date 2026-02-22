@@ -1,6 +1,10 @@
 #pragma once
 
-// Structure for colored play area elements, each able to hold a color previously initialized with add_color();
+// Structure for colored play area elements:
+// int pos_x
+// int pos_y
+// char shape
+// short color_pair
 typedef struct element {
     unsigned int pos_x;
     unsigned int pos_y;

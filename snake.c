@@ -6,6 +6,7 @@
 #include <poll.h>
 #include <string.h>
 #include <unistd.h>
+#include "display.h"
 
 // todo check sqrt and add if needed.
 // todo malloc for some array free + set to null , calloc sets allocated space to 0;
@@ -29,15 +30,9 @@
 // x
 // x
 
-struct block {
-    int posX;
-    int posY;
-    char type;
-};
-
 bool print_field(char arr[SIZE][SIZE], int length, bool ate);
-int process_move(struct block snake[], char direction, int length, int food_x, int food_y);
-void update_field(char arr[SIZE][SIZE], struct block snake[], int length, int food_x, int food_y);
+int process_move(ELEMENT snake[], char direction, int length, int food_x, int food_y);
+void update_field(char arr[SIZE][SIZE], ELEMENT snake[], int length, int food_x, int food_y);
 char get_input(char current);
 
 bool print_field(char arr[SIZE][SIZE], int length, bool ate) {
@@ -68,40 +63,40 @@ bool print_field(char arr[SIZE][SIZE], int length, bool ate) {
     return false;
 }
 
-int process_move(struct block snake[], char direction, int length, int food_x, int food_y) {
+int process_move(ELEMENT snake[], char direction, int length, int food_x, int food_y) {
     // Returns: 1 - no food, consumed, 2 - food consumed, 3 - death.
 
     // Update the snake array with new coordinates.
     // Take first element, back up coords, move it, put original coord to next element.
-    int prev_x = 0;
-    int prev_y = 0;
+    unsigned int prev_x = 0;
+    unsigned int prev_y = 0;
 
     for (int i = 0; i < length; i++) {
         if (i == 0) {
-            prev_x = snake[i].posX;
-            prev_y = snake[i].posY;
+            prev_x = snake[i].pos_x;
+            prev_y = snake[i].pos_y;
             switch (direction) {
                 case 'w':
-                    snake[i].posX -= 1;
-                    if (snake[0].posX == -1) {
+                    snake[i].pos_x -= 1;
+                    if (snake[0].pos_x == -1) {
                         return 3;
                     }
                     break;
                 case 's':
-                    snake[i].posX += 1;
-                    if (snake[0].posX == SIZE) {
+                    snake[i].pos_x += 1;
+                    if (snake[0].pos_x == SIZE) {
                         return 3;
                     }
                     break;
                 case 'a':
-                    snake[i].posY -= 1;
-                    if (snake[0].posY == -1) {
+                    snake[i].pos_y -= 1;
+                    if (snake[0].pos_y == -1) {
                         return 3;
                     }
                     break;
                 case 'd':
-                    snake[i].posY += 1;
-                    if (snake[0].posY == SIZE) {
+                    snake[i].pos_y += 1;
+                    if (snake[0].pos_y == SIZE) {
                         return 3;
                     }
                     break;
@@ -109,27 +104,27 @@ int process_move(struct block snake[], char direction, int length, int food_x, i
                     break;
             }
         } else {
-            int current_x = snake[i].posX;
-            int current_y = snake[i].posY;
-            snake[i].posX = prev_x;
-            snake[i].posY = prev_y;
+            unsigned int current_x = snake[i].pos_x;
+            unsigned int current_y = snake[i].pos_y;
+            snake[i].pos_x = prev_x;
+            snake[i].pos_y = prev_y;
             prev_x = current_x;
             prev_y = current_y;
         }
     }
 
     char pos[20];
-    snprintf(pos, sizeof(pos), "\nHead pos: x:%d y:%d\n", snake[0].posX, snake[0].posY);
+    snprintf(pos, sizeof(pos), "\nHead pos: x:%d y:%d\n", snake[0].pos_x, snake[0].pos_y);
     addstr(pos);
 
     // Check if food was consumed
-    if (snake[0].posX == food_x && snake[0].posY == food_y) {
+    if (snake[0].pos_x == food_x && snake[0].pos_y == food_y) {
         return 2;
     }
     return 1;
 }
 
-void update_field(char arr[SIZE][SIZE], struct block snake[], int length, int food_x, int food_y) {
+void update_field(char arr[SIZE][SIZE], ELEMENT snake[], int length, int food_x, int food_y) {
     // Zero the whole field.
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
@@ -142,7 +137,7 @@ void update_field(char arr[SIZE][SIZE], struct block snake[], int length, int fo
 
     // Draw snake into the field.
     for (int i = 0; i < length; i++) {
-        arr[snake[i].posX][snake[i].posY] = snake[i].type;
+        arr[snake[i].pos_x][snake[i].pos_y] = snake[i].shape;
     }
 }
 
@@ -195,7 +190,7 @@ int main(void) {
     srand(time(NULL));
 
     char field[SIZE][SIZE];
-    struct block snake[WIN_LENGTH];
+    ELEMENT snake[WIN_LENGTH];
     int length = START_LENGTH;
     int food_x = rand() % SIZE;
     int food_y = rand() % SIZE;
@@ -209,9 +204,9 @@ int main(void) {
 
     // Init snake
     for (int i = 0; i < length; i++) {
-        snake[i].type = BODY;
-        snake[i].posX = HEAD_POS;
-        snake[i].posY = HEAD_POS + i;
+        snake[i].shape = BODY;
+        snake[i].pos_x = HEAD_POS;
+        snake[i].pos_y = HEAD_POS + i;
     }
 
     char *menu[3] = {"START", "CREDITS", "QUIT"};
@@ -278,9 +273,9 @@ int main(void) {
 
         if (result == 2) {
             // Grow snake. The new block will be added to the correct place on the next move.
-            snake[length].posX = snake[0].posX;
-            snake[length].posY = snake[0].posY;
-            snake[length].type = BODY;
+            snake[length].pos_x = snake[0].pos_x;
+            snake[length].pos_y = snake[0].pos_y;
+            snake[length].shape = BODY;
             length += 1;
 
             if (length == WIN_LENGTH) {
