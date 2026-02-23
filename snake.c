@@ -11,45 +11,40 @@
 // todo check sqrt and add if needed.
 // todo malloc for some array free + set to null , calloc sets allocated space to 0;
 
-// Compiling: clear; cc snake.c -o snake -lncurses; ./snake
-
-#define SIZE 40
+#define SIZE 30
 #define HEAD_POS 20
 #define WIN_LENGTH 15
 #define START_LENGTH 10
-#define SPEED 100
+// Lower = faster.
+#define SPEED 1000
 
 // block types:
 #define EMPTY '.'
 #define BODY '0'
 #define FOOD '#'
 
-// clear; cc snake.c -o snake -lncurses; ./snake
+// clear; cc snake.c display.c -o snake -lncurses; ./snake
 //  y y y
 // x
 // x
 // x
 
-bool print_field(char arr[SIZE][SIZE], int length, bool ate);
+bool print_field(int size_x, int size_y, const ELEMENT arr[size_x][size_y], int length, bool ate);
 int process_move(ELEMENT snake[], char direction, int length, int food_x, int food_y);
-void update_field(char arr[SIZE][SIZE], ELEMENT snake[], int length, int food_x, int food_y);
+void update_field(int size_x, int size_y, ELEMENT arr[size_x][size_y], ELEMENT snake[], int length, int food_x, int food_y);
 char get_input(char current);
 
-bool print_field(char arr[SIZE][SIZE], int length, bool ate) {
+bool print_field(const int size_x, const int size_y, const ELEMENT arr[size_x][size_y], int length, bool ate) {
     int body_parts = 0;
 
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
-            mvaddch(i, j, arr[i][j]);
-            if (arr[i][j] == BODY)
+    for (int i = 0; i < size_x; i++) {
+        for (int j = 0; j < size_y; j++) {
+            if (arr[i][j].shape == BODY)
                 body_parts++;
         }
     }
-    addstr("\nMovement, WSAD, Q-Quit, P-Pause");
     char score[40];
     snprintf(score, sizeof(score), "\nScore: %d\n", length);
-    addstr(score);
-    refresh();
 
     if (length > body_parts) {
         // We bit ourselves because there are less body parts than the length of the snake.
@@ -59,6 +54,18 @@ bool print_field(char arr[SIZE][SIZE], int length, bool ate) {
         }
         return true;
     }
+
+    // Using a constant SIZE here instead of size_x/y results in a warning because fixed size arrays are handled
+    // differently. Using variables removes the warning.
+    // todo why is this not drawing correctly?
+    draw_game_screen(size_x, size_y, arr ,score);
+
+    for (int i = 0; i < size_x; i++) {
+        for (int j = 0; j < size_y; j++) {
+            mvwaddch(stdscr, i, j, arr[i][j].shape);
+        }
+    }
+
     // Normal step, nothing happened, move on.
     return false;
 }
@@ -124,20 +131,20 @@ int process_move(ELEMENT snake[], char direction, int length, int food_x, int fo
     return 1;
 }
 
-void update_field(char arr[SIZE][SIZE], ELEMENT snake[], int length, int food_x, int food_y) {
+void update_field(const int size_x, const int size_y, ELEMENT arr[size_x][size_y], ELEMENT snake[], int length, int food_x, int food_y) {
     // Zero the whole field.
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
-            arr[i][j] = EMPTY;
+            arr[i][j].shape = EMPTY;
         }
     }
 
     // Place food.
-    arr[food_x][food_y] = FOOD;
+    arr[food_x][food_y].shape = FOOD;
 
     // Draw snake into the field.
     for (int i = 0; i < length; i++) {
-        arr[snake[i].pos_x][snake[i].pos_y] = snake[i].shape;
+        arr[snake[i].pos_x][snake[i].pos_y].shape = snake[i].shape;
     }
 }
 
@@ -187,18 +194,21 @@ void end_game(bool win, int length) {
 
 int main(void) {
     // Init rand function.
-    srand(time(NULL));
+    srand(time(nullptr));
 
-    char field[SIZE][SIZE];
+    const int size_x = SIZE;
+    const int size_y = SIZE;
+
+    ELEMENT field[size_x][size_y];
     ELEMENT snake[WIN_LENGTH];
     int length = START_LENGTH;
-    int food_x = rand() % SIZE;
-    int food_y = rand() % SIZE;
+    int food_x = rand() % size_x;
+    int food_y = rand() % size_y;
 
     // Init field.
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
-            field[i][j] = EMPTY;
+    for (int i = 0; i < size_x; i++) {
+        for (int j = 0; j < size_y; j++) {
+            field[i][j].shape = EMPTY;
         }
     }
 
@@ -209,33 +219,21 @@ int main(void) {
         snake[i].pos_y = HEAD_POS + i;
     }
 
-    char *menu[3] = {"START", "CREDITS", "QUIT"};
-    int selection = 0;
+    start();
+    char *menu_items[2];
 
-    for (int i = 0; i < 3; i++) {
-        printf("%d. %s\n", i, menu[i]);
+    menu_items[0] = "Start";
+    menu_items[1] = "Quit";
+    const int selected = draw_menu(2, menu_items, 0);
+
+    if (selected == 1) {
+        end();
+        return 0;
     }
-    printf("Select option: ");
-    do {
-        scanf("%d", &selection);
-        if (strcmp("QUIT", menu[selection]) == 0) {
-            return 0;
-        }
-        if (strcmp("CREDITS", menu[selection]) == 0) {
-            puts("Ondrej Mejzlik");
-            printf("Select option: ");
-        }
-    } while (strcmp("START", menu[selection]) != 0);
-    puts("");
-
-    // Init ncurses.
-    initscr();
-    cbreak();
-    noecho();
 
     // Draw initial play area.
-    update_field(field, snake, length, food_x, food_y);
-    print_field(field, length, false);
+    update_field(size_x, size_y, field, snake, length, food_x, food_y);
+    print_field(size_x, size_y, field, length, false);
 
     // Main loop.
     char last_direction = 's';
@@ -283,11 +281,11 @@ int main(void) {
             }
 
             // New food location.
-            food_x = rand() % SIZE;
-            food_y = rand() % SIZE;
+            food_x = rand() % size_x;
+            food_y = rand() % size_y;
         }
-        update_field(field, snake, length, food_x, food_y);
-        if (print_field(field, length, ((result == 2) ? true : false ))) {
+        update_field(size_x, size_y, field, snake, length, food_x, food_y);
+        if (print_field(size_x, size_y, field, length, result == 2 ? true : false)) {
             // Returns true if the snake bit itself.
             result = 3;
         }
