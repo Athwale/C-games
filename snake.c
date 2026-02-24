@@ -138,7 +138,7 @@ void update_field(const int size_x, const int size_y, ELEMENT arr[size_x][size_y
 
     // Draw snake into the field.
     for (int i = 0; i < length; i++) {
-        // todo segfault on left side and top side
+        // todo y pos behaves oddly on the left side of the field.                                                                                                    .
         arr[snake[i].pos_x][snake[i].pos_y].shape = snake[i].shape;
     }
 }
@@ -188,7 +188,6 @@ void end_game(bool win, int length) {
 }
 
 int main(void) {
-    // todo y pos behaves oddly on the left side of the field.                                                                                                    .
     // Init rand function.
     srand(time(nullptr));
 
@@ -221,7 +220,6 @@ int main(void) {
 
     start();
     char *menu_items[2];
-
     menu_items[0] = "Start";
     menu_items[1] = "Quit";
     const int selected = draw_menu(2, menu_items, 0);
@@ -284,15 +282,16 @@ int main(void) {
             food_x = rand() % size_x;
             food_y = rand() % size_y;
         }
-        update_field(size_x, size_y, field, snake, length, food_x, food_y);
-        if (print_field(size_x, size_y, field, length, result == 2 ? true : false)) {
-            // Returns true if the snake bit itself.
-            result = 3;
-        }
-
         if (result == 3) {
             // Die.
             break;
+        }
+
+        update_field(size_x, size_y, field, snake, length, food_x, food_y);
+
+        if (print_field(size_x, size_y, field, length, result == 2 ? true : false)) {
+            // Returns true if the snake bit itself.
+            result = 3;
         }
     }
 
