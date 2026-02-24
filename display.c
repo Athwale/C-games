@@ -35,13 +35,15 @@ void draw_game_screen(const int x_length, const int y_length, const ELEMENT area
     // X vertical, Y horizontal.
     const int pos_x = (LINES / 2) - (x_length / 2);
     const int pos_y = (COLS / 2) - (y_length / 2);
-    // Win is the parent. Height, width, x, y
-    play_area = subwin(win, x_length + 2, y_length + 4, pos_x, pos_y);
 
-    // Add border with color.
-    set_current_color(play_area, border_color);
-    box(play_area, 0, 0);
-    set_current_color(play_area, DEFAULT_BORDER_COLOR);
+    // Win is the parent. Height, width, x, y
+    if (play_area == nullptr) {
+        play_area = subwin(win, x_length + 2, y_length + 4, pos_x, pos_y);
+        // Add border with color.
+        set_current_color(play_area, border_color);
+        box(play_area, 0, 0);
+        set_current_color(play_area, DEFAULT_BORDER_COLOR);
+    }
 
     // These coordinates are relative to the new window.
     for (int i = 0; i < x_length; i++) {
@@ -54,6 +56,10 @@ void draw_game_screen(const int x_length, const int y_length, const ELEMENT area
     set_current_color(win, score_color);
     mvaddstr(pos_x + x_length + 2, pos_y, score);
     set_current_color(play_area, DEFAULT_SCORE_COLOR);
+
+    touchwin(win);
+    wrefresh(win);
+    wrefresh(play_area);
     refresh();
 }
 

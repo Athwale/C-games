@@ -57,20 +57,13 @@ bool print_field(const int size_x, const int size_y, const ELEMENT arr[size_x][s
 
     // Using a constant SIZE here instead of size_x/y results in a warning because fixed size arrays are handled
     // differently. Using variables removes the warning.
-    // todo why is this not drawing correctly?
     draw_game_screen(size_x, size_y, arr ,score);
-
-    for (int i = 0; i < size_x; i++) {
-        for (int j = 0; j < size_y; j++) {
-            mvwaddch(stdscr, i, j, arr[i][j].shape);
-        }
-    }
 
     // Normal step, nothing happened, move on.
     return false;
 }
 
-int process_move(ELEMENT snake[], char direction, int length, int food_x, int food_y) {
+int process_move(ELEMENT snake[], const char direction, const int length, const int food_x, const int food_y) {
     // Returns: 1 - no food, consumed, 2 - food consumed, 3 - death.
 
     // Update the snake array with new coordinates.
@@ -119,8 +112,9 @@ int process_move(ELEMENT snake[], char direction, int length, int food_x, int fo
             prev_y = current_y;
         }
     }
+    printf("%d, %d\n", snake[0].pos_x, snake[0].pos_y);
 
-    char pos[20];
+    char pos[30];
     snprintf(pos, sizeof(pos), "\nHead pos: x:%d y:%d\n", snake[0].pos_x, snake[0].pos_y);
     addstr(pos);
 
@@ -133,8 +127,8 @@ int process_move(ELEMENT snake[], char direction, int length, int food_x, int fo
 
 void update_field(const int size_x, const int size_y, ELEMENT arr[size_x][size_y], ELEMENT snake[], int length, int food_x, int food_y) {
     // Zero the whole field.
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
+    for (int i = 0; i < size_x; i++) {
+        for (int j = 0; j < size_y; j++) {
             arr[i][j].shape = EMPTY;
         }
     }
@@ -144,6 +138,7 @@ void update_field(const int size_x, const int size_y, ELEMENT arr[size_x][size_y
 
     // Draw snake into the field.
     for (int i = 0; i < length; i++) {
+        // todo segfault on left side and top side
         arr[snake[i].pos_x][snake[i].pos_y].shape = snake[i].shape;
     }
 }
@@ -193,6 +188,7 @@ void end_game(bool win, int length) {
 }
 
 int main(void) {
+    // todo y pos behaves oddly on the left side of the field.                                                                                                    .
     // Init rand function.
     srand(time(nullptr));
 
@@ -205,18 +201,22 @@ int main(void) {
     int food_x = rand() % size_x;
     int food_y = rand() % size_y;
 
-    // Init field.
+    // Init field. Uninitialized positions will result in random numbers being added or subtracted from.
     for (int i = 0; i < size_x; i++) {
-        for (int j = 0; j < size_y; j++) {
+        for (int j = 0; j < size_y; j++) {\
+            field[i][j].pos_x = 0;
+            field[i][j].pos_y = 0;
             field[i][j].shape = EMPTY;
+            field[i][j].color_pair = 1;
         }
     }
 
     // Init snake
     for (int i = 0; i < length; i++) {
-        snake[i].shape = BODY;
         snake[i].pos_x = HEAD_POS;
         snake[i].pos_y = HEAD_POS + i;
+        snake[i].shape = BODY;
+        snake[i].color_pair = 1;
     }
 
     start();
