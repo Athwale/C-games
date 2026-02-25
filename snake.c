@@ -16,7 +16,7 @@
 #define WIN_LENGTH 15
 #define START_LENGTH 10
 // Lower = faster.
-#define SPEED 1000
+#define SPEED 200
 
 // block types:
 #define EMPTY '.'
@@ -29,12 +29,12 @@
 // x
 // x
 
-bool print_field(int size_x, int size_y, const ELEMENT arr[size_x][size_y], int length, bool ate);
+bool print_field(int size_x, int size_y, const ELEMENT arr[size_x][size_y], int length, bool ate, bool paused);
 int process_move(ELEMENT snake[], char direction, int length, int food_x, int food_y);
 void update_field(int size_x, int size_y, ELEMENT arr[size_x][size_y], ELEMENT snake[], int length, int food_x, int food_y);
 char get_input(char current);
 
-bool print_field(const int size_x, const int size_y, const ELEMENT arr[size_x][size_y], int length, bool ate) {
+bool print_field(const int size_x, const int size_y, const ELEMENT arr[size_x][size_y], int length, bool ate, bool paused) {
     int body_parts = 0;
 
     for (int i = 0; i < size_x; i++) {
@@ -44,7 +44,12 @@ bool print_field(const int size_x, const int size_y, const ELEMENT arr[size_x][s
         }
     }
     char score[40];
-    snprintf(score, sizeof(score), "\nScore: %d\n", length);
+    if (paused) {
+        snprintf(score, sizeof(score), "\nGame paused\n");
+    } else {
+        snprintf(score, sizeof(score), "\nScore: %d\n", length);
+
+    }
 
     if (length > body_parts) {
         // We bit ourselves because there are less body parts than the length of the snake.
@@ -114,6 +119,7 @@ int process_move(ELEMENT snake[], const char direction, const int length, const 
     }
     printf("%d, %d\n", snake[0].pos_x, snake[0].pos_y);
 
+    // todo this has to be part of score or displayed in some other way separate window under play area with score.
     char pos[30];
     snprintf(pos, sizeof(pos), "\nHead pos: x:%d y:%d\n", snake[0].pos_x, snake[0].pos_y);
     addstr(pos);
@@ -140,12 +146,13 @@ void update_field(const int size_x, const int size_y, ELEMENT arr[size_x][size_y
     for (int i = 0; i < length; i++) {
         // todo y pos behaves oddly on the left side of the field.                                                                                                    .
         arr[snake[i].pos_x][snake[i].pos_y].shape = snake[i].shape;
+        arr[snake[i].pos_x][snake[i].pos_y].color_pair = snake[i].color_pair;
     }
 }
 
-char get_input(char current) {
+char get_input(const char current) {
     struct pollfd mypoll = {STDIN_FILENO, POLLIN|POLLPRI};
-    char inputs[] = "wsadqp";
+    const char inputs[] = "wsadqp";
     char c;
 
     if (poll(&mypoll, 1, SPEED))    {
@@ -200,13 +207,23 @@ int main(void) {
     int food_x = rand() % size_x;
     int food_y = rand() % size_y;
 
+    start();
+    set_border_color(add_color(COLOR_RED, -1));
+    const short field_color = add_color(COLOR_GREEN,-1);
+    const short snake_color = add_color(COLOR_YELLOW,-1);
+
+    char *menu_items[2];
+    menu_items[0] = "Start";
+    menu_items[1] = "Quit";
+    const int selected = draw_menu(2, menu_items, 0);
+
     // Init field. Uninitialized positions will result in random numbers being added or subtracted from.
     for (int i = 0; i < size_x; i++) {
         for (int j = 0; j < size_y; j++) {\
             field[i][j].pos_x = 0;
             field[i][j].pos_y = 0;
             field[i][j].shape = EMPTY;
-            field[i][j].color_pair = 1;
+            field[i][j].color_pair = field_color;
         }
     }
 
@@ -215,14 +232,8 @@ int main(void) {
         snake[i].pos_x = HEAD_POS;
         snake[i].pos_y = HEAD_POS + i;
         snake[i].shape = BODY;
-        snake[i].color_pair = 1;
+        snake[i].color_pair = snake_color;
     }
-
-    start();
-    char *menu_items[2];
-    menu_items[0] = "Start";
-    menu_items[1] = "Quit";
-    const int selected = draw_menu(2, menu_items, 0);
 
     if (selected == 1) {
         end();
@@ -231,7 +242,6 @@ int main(void) {
 
     // Draw initial play area.
     update_field(size_x, size_y, field, snake, length, food_x, food_y);
-    print_field(size_x, size_y, field, length, false);
 
     // Main loop.
     char last_direction = 's';
@@ -247,6 +257,7 @@ int main(void) {
         }
 
         if (paused) {
+            print_field(size_x, size_y, field, length, false, true);
             continue;
         }
 
@@ -272,6 +283,7 @@ int main(void) {
             snake[length].pos_x = snake[0].pos_x;
             snake[length].pos_y = snake[0].pos_y;
             snake[length].shape = BODY;
+            snake[length].color_pair = snake_color;
             length += 1;
 
             if (length == WIN_LENGTH) {
@@ -289,9 +301,10 @@ int main(void) {
 
         update_field(size_x, size_y, field, snake, length, food_x, food_y);
 
-        if (print_field(size_x, size_y, field, length, result == 2 ? true : false)) {
+        if (print_field(size_x, size_y, field, length, result == 2 ? true : false, false)) {
             // Returns true if the snake bit itself.
             result = 3;
+            break;
         }
     }
 
