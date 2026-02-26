@@ -10,6 +10,7 @@
 bool initialized = false;
 WINDOW *win; // Main screen, whole terminal
 WINDOW *play_area; // Playing field
+WINDOW *score_area; // Score field
 WINDOW *menu; // Menu window
 WINDOW *endscreen; // Menu window
 
@@ -38,11 +39,16 @@ void draw_game_screen(const int x_length, const int y_length, const ELEMENT area
 
     // Win is the parent. Height, width, x, y
     if (play_area == nullptr) {
+        // todo add score area border color.
         play_area = subwin(win, x_length + 2, y_length + 4, pos_x, pos_y);
+        score_area = subwin(win, 5, y_length + 4, pos_x + x_length + 2, pos_y);
         // Add border with color.
         set_current_color(play_area, border_color);
         box(play_area, 0, 0);
         set_current_color(play_area, DEFAULT_BORDER_COLOR);
+        set_current_color(score_area, border_color);
+        box(score_area, 0, 0);
+        set_current_color(score_area, DEFAULT_BORDER_COLOR);
     }
 
     // These coordinates are relative to the new window.
@@ -53,19 +59,23 @@ void draw_game_screen(const int x_length, const int y_length, const ELEMENT area
         }
     }
 
+    // todo score is too long, it has to be added line by line.
     set_current_color(win, score_color);
-    mvaddstr(pos_x + x_length + 2, pos_y, score);
+    mvwaddstr(score_area, 2, 2, score);
     set_current_color(play_area, DEFAULT_SCORE_COLOR);
 
     touchwin(win);
     wrefresh(win);
     wrefresh(play_area);
+    wrefresh(score_area);
     refresh();
 }
 
 void end_game_screen() {
     wclear(play_area);
+    wclear(score_area);
     delwin(play_area);
+    delwin(score_area);
     wclear(win);
     refresh();
 }
@@ -217,6 +227,7 @@ void start() {
 
 void end() {
     delwin(play_area);
+    delwin(score_area);
     delwin(win);
     endwin();
     refresh();

@@ -29,12 +29,13 @@
 // x
 // x
 
-bool print_field(int size_x, int size_y, const ELEMENT arr[size_x][size_y], int length, bool ate, bool paused);
+bool print_game(int size_x, int size_y, const ELEMENT arr[size_x][size_y], int length, bool ate, bool paused, unsigned int head_x, unsigned int head_y);
 int process_move(ELEMENT snake[], char direction, int length, int food_x, int food_y);
 void update_field(int size_x, int size_y, ELEMENT arr[size_x][size_y], ELEMENT snake[], int length, int food_x, int food_y);
 char get_input(char current);
 
-bool print_field(const int size_x, const int size_y, const ELEMENT arr[size_x][size_y], int length, bool ate, bool paused) {
+bool print_game(const int size_x, const int size_y, const ELEMENT arr[size_x][size_y],
+    int length, bool ate, bool paused, const unsigned int head_x, const unsigned int head_y) {
     int body_parts = 0;
 
     for (int i = 0; i < size_x; i++) {
@@ -43,12 +44,11 @@ bool print_field(const int size_x, const int size_y, const ELEMENT arr[size_x][s
                 body_parts++;
         }
     }
-    char score[40];
+    char score[80];
     if (paused) {
         snprintf(score, sizeof(score), "\nGame paused\n");
     } else {
-        snprintf(score, sizeof(score), "\nScore: %d\n", length);
-
+        snprintf(score, sizeof(score), "\nScore: %d\nHead pos: x:%d y:%d\n", length, head_x, head_y);
     }
 
     if (length > body_parts) {
@@ -117,12 +117,8 @@ int process_move(ELEMENT snake[], const char direction, const int length, const 
             prev_y = current_y;
         }
     }
+    // todo here
     printf("%d, %d\n", snake[0].pos_x, snake[0].pos_y);
-
-    // todo this has to be part of score or displayed in some other way separate window under play area with score.
-    char pos[30];
-    snprintf(pos, sizeof(pos), "\nHead pos: x:%d y:%d\n", snake[0].pos_x, snake[0].pos_y);
-    addstr(pos);
 
     // Check if food was consumed
     if (snake[0].pos_x == food_x && snake[0].pos_y == food_y) {
@@ -144,7 +140,7 @@ void update_field(const int size_x, const int size_y, ELEMENT arr[size_x][size_y
 
     // Draw snake into the field.
     for (int i = 0; i < length; i++) {
-        // todo y pos behaves oddly on the left side of the field.                                                                                                    .
+        // todo y pos behaves oddly on the left side of the field.
         arr[snake[i].pos_x][snake[i].pos_y].shape = snake[i].shape;
         arr[snake[i].pos_x][snake[i].pos_y].color_pair = snake[i].color_pair;
     }
@@ -257,7 +253,8 @@ int main(void) {
         }
 
         if (paused) {
-            print_field(size_x, size_y, field, length, false, true);
+            print_game(size_x, size_y, field, length, false, true,
+                snake[0].pos_x, snake[0].pos_y);
             continue;
         }
 
@@ -301,7 +298,8 @@ int main(void) {
 
         update_field(size_x, size_y, field, snake, length, food_x, food_y);
 
-        if (print_field(size_x, size_y, field, length, result == 2 ? true : false, false)) {
+        if (print_game(size_x, size_y, field, length, result == 2 ? true : false, false,
+            snake[0].pos_x, snake[0].pos_y)) {
             // Returns true if the snake bit itself.
             result = 3;
             break;
