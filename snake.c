@@ -12,7 +12,7 @@
 // todo malloc for some array free + set to null , calloc sets allocated space to 0;
 
 #define SIZE 30
-#define HEAD_POS 20
+#define HEAD_POS 10
 #define WIN_LENGTH 15
 #define START_LENGTH 10
 // Lower = faster.
@@ -29,13 +29,13 @@
 // x
 // x
 
-bool print_game(int size_x, int size_y, const ELEMENT arr[size_x][size_y], int length, bool ate, bool paused, unsigned int head_x, unsigned int head_y);
+bool print_game(int size_x, int size_y, const ELEMENT arr[size_x][size_y], int length, bool ate, bool paused);
 int process_move(ELEMENT snake[], char direction, int length, int food_x, int food_y);
 void update_field(int size_x, int size_y, ELEMENT arr[size_x][size_y], ELEMENT snake[], int length, int food_x, int food_y);
 char get_input(char current);
 
 bool print_game(const int size_x, const int size_y, const ELEMENT arr[size_x][size_y],
-    int length, bool ate, bool paused, const unsigned int head_x, const unsigned int head_y) {
+    int length, bool ate, bool paused) {
     int body_parts = 0;
 
     for (int i = 0; i < size_x; i++) {
@@ -44,11 +44,11 @@ bool print_game(const int size_x, const int size_y, const ELEMENT arr[size_x][si
                 body_parts++;
         }
     }
-    char score[80];
+    char score[25];
     if (paused) {
-        snprintf(score, sizeof(score), "\nGame paused\n");
+        snprintf(score, sizeof(score), "Paused");
     } else {
-        snprintf(score, sizeof(score), "\nScore: %d\nHead pos: x:%d y:%d\n", length, head_x, head_y);
+        snprintf(score, sizeof(score), "Score: %d", length);
     }
 
     if (length > body_parts) {
@@ -204,9 +204,14 @@ int main(void) {
     int food_y = rand() % size_y;
 
     start();
-    set_border_color(add_color(COLOR_RED, -1));
+    const short border_color = add_color(COLOR_RED, -1);
     const short field_color = add_color(COLOR_GREEN,-1);
     const short snake_color = add_color(COLOR_YELLOW,-1);
+    const short score_color = add_color(COLOR_GREEN,-1);
+    const short score_border_color = add_color(COLOR_GREEN,-1);
+    set_border_color(border_color);
+    set_score_color(score_color);
+    set_score_border_color(score_border_color);
 
     char *menu_items[2];
     menu_items[0] = "Start";
@@ -253,8 +258,7 @@ int main(void) {
         }
 
         if (paused) {
-            print_game(size_x, size_y, field, length, false, true,
-                snake[0].pos_x, snake[0].pos_y);
+            print_game(size_x, size_y, field, length, false, true);
             continue;
         }
 
@@ -298,8 +302,7 @@ int main(void) {
 
         update_field(size_x, size_y, field, snake, length, food_x, food_y);
 
-        if (print_game(size_x, size_y, field, length, result == 2 ? true : false, false,
-            snake[0].pos_x, snake[0].pos_y)) {
+        if (print_game(size_x, size_y, field, length, result == 2 ? true : false, false)) {
             // Returns true if the snake bit itself.
             result = 3;
             break;

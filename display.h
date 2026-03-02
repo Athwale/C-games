@@ -20,5 +20,6 @@ void draw_end_screen(int score);
 short add_color(short foreground, short background);
 void set_border_color(short color_pair_number);
 void set_score_color(short color_pair_number);
+void set_score_border_color(short color_pair_number);
 void start();
 void end();

@@ -16,6 +16,7 @@ WINDOW *endscreen; // Menu window
 
 short registered_colors = 0;
 short score_color = 0;
+short score_border_color = 0;
 short border_color = 0;
 
 // todo document all functions.
@@ -39,14 +40,14 @@ void draw_game_screen(const int x_length, const int y_length, const ELEMENT area
 
     // Win is the parent. Height, width, x, y
     if (play_area == nullptr) {
-        // todo add score area border color.
         play_area = subwin(win, x_length + 2, y_length + 4, pos_x, pos_y);
         score_area = subwin(win, 5, y_length + 4, pos_x + x_length + 2, pos_y);
         // Add border with color.
         set_current_color(play_area, border_color);
         box(play_area, 0, 0);
         set_current_color(play_area, DEFAULT_BORDER_COLOR);
-        set_current_color(score_area, border_color);
+
+        set_current_color(score_area, score_border_color);
         box(score_area, 0, 0);
         set_current_color(score_area, DEFAULT_BORDER_COLOR);
     }
@@ -59,10 +60,9 @@ void draw_game_screen(const int x_length, const int y_length, const ELEMENT area
         }
     }
 
-    // todo score is too long, it has to be added line by line.
-    set_current_color(win, score_color);
-    mvwaddstr(score_area, 2, 2, score);
-    set_current_color(play_area, DEFAULT_SCORE_COLOR);
+    set_current_color(score_area, score_color);
+    mvwaddnstr(score_area, 1, 1, score, y_length);
+    set_current_color(score_area, DEFAULT_SCORE_COLOR);
 
     touchwin(win);
     wrefresh(win);
@@ -201,6 +201,16 @@ void set_score_color(const short color_pair_number) {
             exit(EXIT_FAILURE);
         }
         score_color = color_pair_number;
+    }
+}
+
+void set_score_border_color(const short color_pair_number) {
+    if (has_colors()) {
+        if (registered_colors == 0) {
+            fprintf(stderr, "No colors have been added.\n");
+            exit(EXIT_FAILURE);
+        }
+        score_border_color = color_pair_number;
     }
 }
 
