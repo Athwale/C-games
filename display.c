@@ -71,15 +71,6 @@ void draw_game_screen(const int x_length, const int y_length, const ELEMENT area
     refresh();
 }
 
-void end_game_screen() {
-    wclear(play_area);
-    wclear(score_area);
-    delwin(play_area);
-    delwin(score_area);
-    wclear(win);
-    refresh();
-}
-
 int draw_menu(const int count, char **items, int selected) {
     if (!initialized) {
         fprintf(stderr,"start() must be called first");
@@ -150,6 +141,8 @@ void draw_end_screen(const int score) {
         exit(EXIT_FAILURE);
     }
 
+    wclear(play_area);
+
     char message[50] = {};
     snprintf(message, 50, "Final score: %d", score);
     // Vertical position:
@@ -160,10 +153,6 @@ void draw_end_screen(const int score) {
     endscreen = subwin(win, 4, (int)strlen(message) + 2, pos_x, pos_y);
     keypad(endscreen, TRUE);
 
-    // Add border with color.
-    set_current_color(endscreen, border_color);
-    box(menu, 0, 0);
-    set_current_color(endscreen, DEFAULT_BORDER_COLOR);
     mvwaddstr(endscreen, 1, 1, message);
     mvwaddstr(endscreen, 2, 1, "Press any key");
 
@@ -236,6 +225,10 @@ void start() {
 }
 
 void end() {
+    wclear(play_area);
+    wclear(score_area);
+    wclear(win);
+
     delwin(play_area);
     delwin(score_area);
     delwin(win);

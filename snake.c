@@ -173,21 +173,15 @@ bool write_results(char text[]) {
     return true;
 }
 
-void end_game(bool win, int length) {
-    endwin();
-    if (!win) {
-        puts("You died.");
-    } else if (length == WIN_LENGTH) {
-        puts("You win.");
-    }
-
-    printf("Snake length %d\n", length);
+void end_game(bool win, const int length) {
+    draw_end_screen(length);
 
     char result[20];
     snprintf(result, sizeof(result), "Final score %d\n.", length);
     if (write_results(result)) {
         puts("Results written to results.txt");
     }
+    end();
 }
 
 int main(void) {
