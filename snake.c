@@ -62,7 +62,7 @@ bool print_game(const int size_x, const int size_y, const ELEMENT arr[size_x][si
 
     // Using a constant SIZE here instead of size_x/y results in a warning because fixed size arrays are handled
     // differently. Using variables removes the warning.
-    draw_game_screen(size_x, size_y, arr ,score);
+    draw_game_screen(size_x, size_y, 5, size_y, arr ,score);
 
     // Normal step, nothing happened, move on.
     return false;
@@ -117,7 +117,7 @@ int process_move(ELEMENT snake[], const char direction, const int length, const 
             prev_y = current_y;
         }
     }
-    // todo here
+    // todo, remove position tracking when not needed.
     printf("%d, %d\n", snake[0].pos_x, snake[0].pos_y);
 
     // Check if food was consumed

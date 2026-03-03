@@ -28,20 +28,39 @@ static void set_current_color(WINDOW *window, const short color) {
     }
 }
 
-void draw_game_screen(const int x_length, const int y_length, const ELEMENT area[x_length][y_length], const char score[]) {
+void terminal_too_small() {
+    end();
+    puts("Terminal window is too small.");
+    exit(1);
+}
+
+// x_length - vertical
+// y_length - horizontal
+void draw_game_screen(const int game_x_length, const int game_y_length, const int score_x_length,
+    const int score_y_length, const ELEMENT area[game_x_length][game_y_length], const char score[]) {
     if (!initialized) {
         fprintf(stderr,"start() must be called first");
         exit(EXIT_FAILURE);
     }
+
     // COLS/LINES are set now.
     // X vertical, Y horizontal.
-    const int pos_x = (LINES / 2) - (x_length / 2);
-    const int pos_y = (COLS / 2) - (y_length / 2);
+    const int pos_x = (LINES / 2) - (game_x_length / 2);
+    const int pos_y = (COLS / 2) - (game_y_length / 2);
+
+    // todo redraw to center when resized?
+    if (LINES < game_x_length + score_x_length + 8) {
+        terminal_too_small();
+    }
+
+    if (COLS < game_y_length + score_y_length) {
+        terminal_too_small();
+    }
 
     // Win is the parent. Height, width, x, y
     if (play_area == nullptr) {
-        play_area = subwin(win, x_length + 2, y_length + 4, pos_x, pos_y);
-        score_area = subwin(win, 5, y_length + 4, pos_x + x_length + 2, pos_y);
+        play_area = subwin(win, game_x_length + 2, game_y_length + 4, pos_x, pos_y);
+        score_area = subwin(win, score_x_length, score_y_length + 4, pos_x + game_x_length + 2, pos_y);
         // Add border with color.
         set_current_color(play_area, border_color);
         box(play_area, 0, 0);
@@ -53,15 +72,15 @@ void draw_game_screen(const int x_length, const int y_length, const ELEMENT area
     }
 
     // These coordinates are relative to the new window.
-    for (int i = 0; i < x_length; i++) {
-        for (int j = 0; j < y_length; j++) {
+    for (int i = 0; i < game_x_length; i++) {
+        for (int j = 0; j < game_y_length; j++) {
             set_current_color(play_area, area[i][j].color_pair);
             mvwaddch(play_area, i+1, j+2, area[i][j].shape);
         }
     }
 
     set_current_color(score_area, score_color);
-    mvwaddnstr(score_area, 1, 1, score, y_length);
+    mvwaddnstr(score_area, 1, 1, score, game_y_length);
     set_current_color(score_area, DEFAULT_SCORE_COLOR);
 
     touchwin(win);
@@ -77,7 +96,6 @@ int draw_menu(const int count, char **items, int selected) {
         exit(EXIT_FAILURE);
     }
 
-    // todo handle resizing?
     unsigned long max_len = 0;
     for (int i = 0; i < count; i++) {
         if (max_len < strlen(items[i])) {
