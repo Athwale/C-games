@@ -18,6 +18,8 @@ short registered_colors = 0;
 short score_color = 0;
 short score_border_color = 0;
 short border_color = 0;
+int lines = 0;
+int cols = 0;
 
 // todo document all functions.
 // todo some stuff can be static.
@@ -48,13 +50,22 @@ void draw_game_screen(const int game_x_length, const int game_y_length, const in
     const int pos_x = (LINES / 2) - (game_x_length / 2);
     const int pos_y = (COLS / 2) - (game_y_length / 2);
 
-    // todo redraw to center when resized?
     if (LINES < game_x_length + score_x_length + 8) {
         terminal_too_small();
     }
 
-    if (COLS < game_y_length + score_y_length) {
+    if (COLS < game_y_length + score_y_length + 4) {
         terminal_too_small();
+    }
+
+    if (cols != COLS || lines != LINES) {
+        cols = COLS;
+        lines = LINES;
+        wclear(play_area);
+        wclear(score_area);
+        delwin(play_area);
+        delwin(score_area);
+        play_area = nullptr;
     }
 
     // Win is the parent. Height, width, x, y
@@ -239,6 +250,8 @@ void start() {
         init_pair(DEFAULT_SCORE_COLOR, COLOR_WHITE, -1);
         registered_colors++;
     }
+    cols = COLS;
+    lines = LINES;
     initialized = true;
 }
 
