@@ -9,7 +9,6 @@
 #include "display.h"
 
 // todo check sqrt and add if needed.
-// todo malloc for some array free + set to null , calloc sets allocated space to 0;
 
 #define SIZE 30
 #define HEAD_POS 10
@@ -117,8 +116,6 @@ int process_move(ELEMENT snake[], const char direction, const int length, const 
             prev_y = current_y;
         }
     }
-    // todo, remove position tracking when not needed.
-    printf("%d, %d\n", snake[0].pos_x, snake[0].pos_y);
 
     // Check if food was consumed
     if (snake[0].pos_x == food_x && snake[0].pos_y == food_y) {
@@ -140,7 +137,6 @@ void update_field(const int size_x, const int size_y, ELEMENT arr[size_x][size_y
 
     // Draw snake into the field.
     for (int i = 0; i < length; i++) {
-        // todo y pos behaves oddly on the left side of the field.
         arr[snake[i].pos_x][snake[i].pos_y].shape = snake[i].shape;
         arr[snake[i].pos_x][snake[i].pos_y].color_pair = snake[i].color_pair;
     }
@@ -222,7 +218,15 @@ int main(void) {
         }
     }
 
-    // Init snake
+    // Init whole snake field to normal values.
+    for (int i = 0; i < WIN_LENGTH; i++) {
+        snake[i].pos_x = 0;
+        snake[i].pos_y = 0;
+        snake[i].shape = BODY;
+        snake[i].color_pair = snake_color;
+    }
+
+    // Init starting snake length.
     for (int i = 0; i < length; i++) {
         snake[i].pos_x = HEAD_POS;
         snake[i].pos_y = HEAD_POS + i;
