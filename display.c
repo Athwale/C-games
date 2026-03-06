@@ -39,7 +39,7 @@ void terminal_too_small() {
 // x_length - vertical
 // y_length - horizontal
 void draw_game_screen(const int game_x_length, const int game_y_length, const int score_x_length,
-    const int score_y_length, const ELEMENT area[game_x_length][game_y_length], const char score[]) {
+    const int score_y_length, const ELEMENT area[game_x_length][game_y_length], const char score[], bool id) {
     if (!initialized) {
         fprintf(stderr,"start() must be called first");
         exit(EXIT_FAILURE);
@@ -86,7 +86,11 @@ void draw_game_screen(const int game_x_length, const int game_y_length, const in
     for (int i = 0; i < game_x_length; i++) {
         for (int j = 0; j < game_y_length; j++) {
             set_current_color(play_area, area[i][j].color_pair);
-            mvwaddch(play_area, i+1, j+2, area[i][j].shape);
+            if (id) {
+                mvwprintw(play_area, i+1, j+2, "%lu ", area[i][j].id);
+            } else {
+                mvwaddch(play_area, i+1, j+2, area[i][j].shape);
+            }
         }
     }
 

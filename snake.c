@@ -61,7 +61,7 @@ bool print_game(const int size_x, const int size_y, const ELEMENT arr[size_x][si
 
     // Using a constant SIZE here instead of size_x/y results in a warning because fixed size arrays are handled
     // differently. Using variables removes the warning.
-    draw_game_screen(size_x, size_y, 5, size_y, arr ,score);
+    draw_game_screen(size_x, size_y, 5, size_y, arr ,score, false);
 
     // Normal step, nothing happened, move on.
     return false;
