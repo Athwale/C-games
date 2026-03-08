@@ -9,6 +9,7 @@
 #include "display.h"
 
 // todo check sqrt and add if needed.
+// todo run it through forgotten memory check.
 
 #define SIZE 30
 #define HEAD_POS 10
