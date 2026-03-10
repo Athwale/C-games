@@ -31,4 +31,7 @@ void set_score_color(short color_pair_number);
 void set_score_border_color(short color_pair_number);
 void start();
 void end();
-void terminal_too_small();
+static void terminal_too_small();
+void init_grid(int x_length, int y_length, ELEMENT field[x_length][y_length], char background_char, short color);
+void set_player_character(char character);
+ELEMENT* process_player_move(int x_length, int y_length, ELEMENT field[x_length][y_length]);
