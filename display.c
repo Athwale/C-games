@@ -9,8 +9,8 @@
 
 bool initialized = false;
 WINDOW *win; // Main screen, whole terminal
-WINDOW *play_area; // Playing field
-WINDOW *score_area; // Score field
+WINDOW *game_window; // Playing field
+WINDOW *score_window; // Score field
 WINDOW *menu; // Menu window
 WINDOW *endscreen; // Menu window
 
@@ -20,7 +20,6 @@ short score_border_color = 0;
 short border_color = 0;
 int lines = 0;
 int cols = 0;
-int keyboard_input = '\0';
 char player_character = '\0';
 
 // todo document all functions.
@@ -163,7 +162,13 @@ static void terminal_too_small() {
     exit(EXIT_FAILURE);
 }
 
-ELEMENT* process_player_move(const int x_length, const int y_length, ELEMENT field[x_length][y_length]) {
+WINDOW *get_play_area_window()
+{
+    // todo changes on terminal resize!
+    return game_window;
+}
+
+static ELEMENT* find_player(const int x_length, const int y_length, ELEMENT field[x_length][y_length]) {
     if (player_character == '\0') {
         end();
         fprintf(stderr,"Player character is not set.\n");
@@ -182,19 +187,71 @@ ELEMENT* process_player_move(const int x_length, const int y_length, ELEMENT fie
     if (player == nullptr) {
         return nullptr;
     }
+    return player;
+}
 
-    keyboard_input = wgetch(play_area);
-    switch (keyboard_input) {
-        case 'w':
-            break;
-        case 's':
-            break;
-        case 'a':
-            break;
-        case 'd':
-            break;
-        default:
-            break;
+// Changes the field in place ready to be redrawn in next step and returns the new player position.
+// If no movement is made, original player position is returned.
+ELEMENT* move_player_up(const int x_length, const int y_length, ELEMENT field[x_length][y_length]) {
+    ELEMENT *player = find_player(x_length, y_length, field);
+    if (player->top != nullptr) {
+        // Switch positions.
+        const char shape = player->shape;
+        const short color_pair = player->color_pair;
+
+        player->shape = player->top->shape;
+        player->color_pair = player->top->color_pair;
+
+        player->top->shape = shape;
+        player->top->color_pair = color_pair;
+    }
+    return player;
+}
+
+ELEMENT* move_player_down(const int x_length, const int y_length, ELEMENT field[x_length][y_length]) {
+    ELEMENT *player = find_player(x_length, y_length, field);
+    if (player->bottom != nullptr) {
+        // Switch positions.
+        const char shape = player->shape;
+        const short color_pair = player->color_pair;
+
+        player->shape = player->bottom->shape;
+        player->color_pair = player->bottom->color_pair;
+
+        player->bottom->shape = shape;
+        player->bottom->color_pair = color_pair;
+    }
+    return player;
+}
+
+ELEMENT* move_player_left(const int x_length, const int y_length, ELEMENT field[x_length][y_length]) {
+    ELEMENT *player = find_player(x_length, y_length, field);
+    if (player->left != nullptr) {
+        // Switch positions.
+        const char shape = player->shape;
+        const short color_pair = player->color_pair;
+
+        player->shape = player->left->shape;
+        player->color_pair = player->left->color_pair;
+
+        player->left->shape = shape;
+        player->left->color_pair = color_pair;
+    }
+    return player;
+}
+
+ELEMENT* move_player_right(const int x_length, const int y_length, ELEMENT field[x_length][y_length]) {
+    ELEMENT *player = find_player(x_length, y_length, field);
+    if (player->right != nullptr) {
+        // Switch positions.
+        const char shape = player->shape;
+        const short color_pair = player->color_pair;
+
+        player->shape = player->right->shape;
+        player->color_pair = player->right->color_pair;
+
+        player->right->shape = shape;
+        player->right->color_pair = color_pair;
     }
     return player;
 }
@@ -224,47 +281,47 @@ void draw_game_screen(const int game_x_length, const int game_y_length, const in
     if (cols != COLS || lines != LINES) {
         cols = COLS;
         lines = LINES;
-        wclear(play_area);
-        wclear(score_area);
-        delwin(play_area);
-        delwin(score_area);
-        play_area = nullptr;
+        wclear(game_window);
+        wclear(score_window);
+        delwin(game_window);
+        delwin(score_window);
+        game_window = nullptr;
     }
 
     // Win is the parent. Height, width, x, y
-    if (play_area == nullptr) {
-        play_area = subwin(win, game_x_length + 2, game_y_length + 4, pos_x, pos_y);
-        score_area = subwin(win, score_x_length, score_y_length + 4, pos_x + game_x_length + 2, pos_y);
+    if (game_window == nullptr) {
+        game_window = subwin(win, game_x_length + 2, game_y_length + 4, pos_x, pos_y);
+        score_window = subwin(win, score_x_length, score_y_length + 4, pos_x + game_x_length + 2, pos_y);
         // Add border with color.
-        set_current_color(play_area, border_color);
-        box(play_area, 0, 0);
-        set_current_color(play_area, DEFAULT_BORDER_COLOR);
+        set_current_color(game_window, border_color);
+        box(game_window, 0, 0);
+        set_current_color(game_window, DEFAULT_BORDER_COLOR);
 
-        set_current_color(score_area, score_border_color);
-        box(score_area, 0, 0);
-        set_current_color(score_area, DEFAULT_BORDER_COLOR);
+        set_current_color(score_window, score_border_color);
+        box(score_window, 0, 0);
+        set_current_color(score_window, DEFAULT_BORDER_COLOR);
     }
 
     // These coordinates are relative to the new window.
     for (int i = 0; i < game_x_length; i++) {
         for (int j = 0; j < game_y_length; j++) {
-            set_current_color(play_area, area[i][j].color_pair);
+            set_current_color(game_window, area[i][j].color_pair);
             if (id) {
-                mvwprintw(play_area, i+1, j+2, "%lu ", area[i][j].id);
+                mvwprintw(game_window, i+1, j+2, "%lu ", area[i][j].id);
             } else {
-                mvwaddch(play_area, i+1, j+2, area[i][j].shape);
+                mvwaddch(game_window, i+1, j+2, area[i][j].shape);
             }
         }
     }
 
-    set_current_color(score_area, score_color);
-    mvwaddnstr(score_area, 1, 1, score, game_y_length);
-    set_current_color(score_area, DEFAULT_SCORE_COLOR);
+    set_current_color(score_window, score_color);
+    mvwaddnstr(score_window, 1, 1, score, game_y_length);
+    set_current_color(score_window, DEFAULT_SCORE_COLOR);
 
     touchwin(win);
     wrefresh(win);
-    wrefresh(play_area);
-    wrefresh(score_area);
+    wrefresh(game_window);
+    wrefresh(score_window);
     refresh();
 }
 
@@ -337,7 +394,7 @@ void draw_end_screen(const int score) {
         exit(EXIT_FAILURE);
     }
 
-    wclear(play_area);
+    wclear(game_window);
 
     char message[50] = {};
     snprintf(message, 50, "Final score: %d", score);
@@ -423,12 +480,12 @@ void start() {
 }
 
 void end() {
-    wclear(play_area);
-    wclear(score_area);
+    wclear(game_window);
+    wclear(score_window);
     wclear(win);
 
-    delwin(play_area);
-    delwin(score_area);
+    delwin(game_window);
+    delwin(score_window);
     delwin(win);
     endwin();
     refresh();
