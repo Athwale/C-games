@@ -3,7 +3,7 @@
 
 #include "display.h"
 
-#define SIZE 10
+#define SIZE 40
 #define BACKGROUND '.'
 #define PLAYER '0'
 
@@ -14,7 +14,7 @@ int main() {
     bool moved = false;
     int keyboard_input = '\0';
 
-    //start();
+    start();
     const short border_color = add_color(COLOR_RED, -1);
     const short field_color = add_color(COLOR_GREEN,-1);
     const short player_color = add_color(COLOR_YELLOW,-1);
@@ -27,60 +27,12 @@ int main() {
     ELEMENT field[SIZE][SIZE];
     init_grid(SIZE, SIZE, field, BACKGROUND, field_color);
 
-    for (int x = 0; x < SIZE; x++) {
-        for (int y = 0; y < SIZE; y++) {
-            printf("ID: %lu X: %d Y: %d ", field[x][y].id, field[x][y].pos_x, field[x][y].pos_y);
-            if (field[x][y].top != nullptr) {
-                printf("T:%lu ", field[x][y].top->id);
-            } else {
-                printf("T:N ");
-            }
-            // todo only goes to x=8, y=0, init is broken there somewhere
-            if (field[x][y].top_left != nullptr) {
-                printf("TL:%lu ", field[x][y].top_left->id);
-            } else {
-                printf("TL:N ");
-            }
-            if (field[x][y].left != nullptr) {
-                printf("L:%lu ", field[x][y].left->id);
-            } else {
-                printf("L:N ");
-            }
-            if (field[x][y].bottom_left != nullptr) {
-                printf("BL:%lu ", field[x][y].bottom_left->id);
-            } else {
-                printf("BL:N ");
-            }
-            if (field[x][y].bottom != nullptr) {
-                printf("B:%lu ", field[x][y].bottom->id);
-            } else {
-                printf("B:N ");
-            }
-            if (field[x][y].bottom_right != nullptr) {
-                printf("BR:%lu ", field[x][y].bottom_right->id);
-            } else {
-                printf("BR:N ");
-            }
-            if (field[x][y].right != nullptr) {
-                printf("R:%lu ", field[x][y].right->id);
-            } else {
-                printf("R:N ");
-            }
-            if (field[x][y].top_right != nullptr) {
-                printf("TR:%lu ", field[x][y].top_right->id);
-            } else {
-                printf("TR:N ");
-            }
-        }
-        puts("\n");
-    }
-
     //end();
     char *items[2];
     items[0] = "Start";
     items[1] = "Quit";
 
-    int choice = draw_menu(2, items, 0);
+    const int choice = draw_menu(2, items, 0);
     if (choice == 1) {
         end();
         return 0;

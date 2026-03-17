@@ -84,7 +84,7 @@ void init_grid(const int x_length, const int y_length, ELEMENT field[x_length][y
                 field[x][y].top_right = nullptr;
                 field[x][y].bottom_left = &field[x+1][y-1];
                 field[x][y].bottom_right = nullptr;
-            } else if (field[x][y].pos_y == 0 && field[x][y].pos_x < x_length - 2 && field[x][y].pos_x > 0) {
+            } else if (field[x][y].pos_y == 0 && field[x][y].pos_x <= x_length - 2 && field[x][y].pos_x > 0) {
                 // Left edge except corners.
                 field[x][y].top = &field[x-1][y];
                 field[x][y].left = nullptr;
@@ -104,7 +104,7 @@ void init_grid(const int x_length, const int y_length, ELEMENT field[x_length][y
                 field[x][y].top_right = &field[x-1][y+1];
                 field[x][y].bottom_left = &field[x+1][y-1];
                 field[x][y].bottom_right = &field[x+1][y+1];
-            } else if (field[x][y].pos_y == y_length - 1 && field[x][y].pos_x < x_length - 2 && field[x][y].pos_x > 0) {
+            } else if (field[x][y].pos_y == y_length - 1 && field[x][y].pos_x <= x_length - 2 && field[x][y].pos_x > 0) {
                 // Right edge except corners.
                 field[x][y].top = &field[x-1][y];
                 field[x][y].left = &field[x][y-1];
@@ -124,7 +124,7 @@ void init_grid(const int x_length, const int y_length, ELEMENT field[x_length][y
                 field[x][y].top_right = &field[x-1][y+1];
                 field[x][y].bottom_left = nullptr;
                 field[x][y].bottom_right = nullptr;
-            } else if (field[x][y].pos_x == x_length - 1 && field[x][y].pos_y <= y_length - 2 && field[x][y].pos_y > 1 ) {
+            } else if (field[x][y].pos_x == x_length - 1 && field[x][y].pos_y <= y_length - 2 && field[x][y].pos_y > 0 ) {
                 // Bottom row except corners.
                 field[x][y].top = &field[x-1][y];
                 field[x][y].left = &field[x][y-1];
@@ -149,6 +149,56 @@ void init_grid(const int x_length, const int y_length, ELEMENT field[x_length][y
         }
     }
 }
+
+void debug_print_grid(const int x_length, const int y_length, ELEMENT field[x_length][y_length]) {
+    for (int x = 0; x < x_length; x++) {
+        for (int y = 0; y < y_length; y++) {
+            printf("ID: %lu X: %d Y: %d ", field[x][y].id, field[x][y].pos_x, field[x][y].pos_y);
+            if (field[x][y].top != nullptr) {
+                printf("T:%lu ", field[x][y].top->id);
+            } else {
+                printf("T:N ");
+            }
+            if (field[x][y].top_left != nullptr) {
+                printf("TL:%lu ", field[x][y].top_left->id);
+            } else {
+                printf("TL:N ");
+            }
+            if (field[x][y].left != nullptr) {
+                printf("L:%lu ", field[x][y].left->id);
+            } else {
+                printf("L:N ");
+            }
+            if (field[x][y].bottom_left != nullptr) {
+                printf("BL:%lu ", field[x][y].bottom_left->id);
+            } else {
+                printf("BL:N ");
+            }
+            if (field[x][y].bottom != nullptr) {
+                printf("B:%lu ", field[x][y].bottom->id);
+            } else {
+                printf("B:N ");
+            }
+            if (field[x][y].bottom_right != nullptr) {
+                printf("BR:%lu ", field[x][y].bottom_right->id);
+            } else {
+                printf("BR:N ");
+            }
+            if (field[x][y].right != nullptr) {
+                printf("R:%lu ", field[x][y].right->id);
+            } else {
+                printf("R:N ");
+            }
+            if (field[x][y].top_right != nullptr) {
+                printf("TR:%lu ", field[x][y].top_right->id);
+            } else {
+                printf("TR:N ");
+            }
+        }
+        puts("\n");
+    }
+}
+
 
 static void set_current_color(WINDOW *window, const short color) {
     if (has_colors()) {

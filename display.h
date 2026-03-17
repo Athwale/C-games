@@ -39,3 +39,4 @@ ELEMENT* move_player_down(int x_length, int y_length, ELEMENT field[x_length][y_
 ELEMENT* move_player_left(int x_length, int y_length, ELEMENT field[x_length][y_length]);
 ELEMENT* move_player_right(int x_length, int y_length, ELEMENT field[x_length][y_length]);
 WINDOW *get_play_area_window();
+void debug_print_grid(int x_length, int y_length, ELEMENT field[x_length][y_length]);
