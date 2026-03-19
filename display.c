@@ -21,9 +21,14 @@ short border_color = 0;
 int lines = 0;
 int cols = 0;
 char player_character = '\0';
+bool moved = false;
 
 // todo document all functions.
 // todo some stuff can be static.
+
+bool player_moved() {
+    return moved;
+}
 
 void set_player_character(const char character) {
     player_character = character;
@@ -244,6 +249,7 @@ static ELEMENT* find_player(const int x_length, const int y_length, ELEMENT fiel
 // If no movement is made, original player position is returned.
 ELEMENT* move_player_up(const int x_length, const int y_length, ELEMENT field[x_length][y_length]) {
     ELEMENT *player = find_player(x_length, y_length, field);
+    moved = false;
     if (player->top != nullptr) {
         // Switch positions.
         const char shape = player->shape;
@@ -254,12 +260,14 @@ ELEMENT* move_player_up(const int x_length, const int y_length, ELEMENT field[x_
 
         player->top->shape = shape;
         player->top->color_pair = color_pair;
+        moved = true;
     }
     return player;
 }
 
 ELEMENT* move_player_down(const int x_length, const int y_length, ELEMENT field[x_length][y_length]) {
     ELEMENT *player = find_player(x_length, y_length, field);
+    moved = false;
     if (player->bottom != nullptr) {
         // Switch positions.
         const char shape = player->shape;
@@ -270,12 +278,14 @@ ELEMENT* move_player_down(const int x_length, const int y_length, ELEMENT field[
 
         player->bottom->shape = shape;
         player->bottom->color_pair = color_pair;
+        moved = true;
     }
     return player;
 }
 
 ELEMENT* move_player_left(const int x_length, const int y_length, ELEMENT field[x_length][y_length]) {
     ELEMENT *player = find_player(x_length, y_length, field);
+    moved = false;
     if (player->left != nullptr) {
         // Switch positions.
         const char shape = player->shape;
@@ -286,12 +296,14 @@ ELEMENT* move_player_left(const int x_length, const int y_length, ELEMENT field[
 
         player->left->shape = shape;
         player->left->color_pair = color_pair;
+        moved = true;
     }
     return player;
 }
 
 ELEMENT* move_player_right(const int x_length, const int y_length, ELEMENT field[x_length][y_length]) {
     ELEMENT *player = find_player(x_length, y_length, field);
+    moved = false;
     if (player->right != nullptr) {
         // Switch positions.
         const char shape = player->shape;
@@ -302,6 +314,7 @@ ELEMENT* move_player_right(const int x_length, const int y_length, ELEMENT field
 
         player->right->shape = shape;
         player->right->color_pair = color_pair;
+        moved = true;
     }
     return player;
 }
