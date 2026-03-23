@@ -1,16 +1,42 @@
 #include <ncurses.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "display.h"
 
-#define SIZE 40
+#define SIZE 20
 #define WALL '#'
-#define EMPTY ' ';
+#define EMPTY ' '
 #define PLAYER '0'
 
 ELEMENT *player_location = nullptr;
 WINDOW *game_area= nullptr;
+
+int count_empty_neighbors(const ELEMENT *block) {
+    int empty = 0;
+    if (block->top != nullptr) {
+        if (block->top->shape == EMPTY) {
+            empty++;
+        }
+    }
+    if (block->left != nullptr) {
+        if (block->left->shape == EMPTY) {
+            empty++;
+        }
+    }
+    if (block->right != nullptr) {
+        if (block->right->shape == EMPTY) {
+            empty++;
+        }
+    }
+    if (block->bottom != nullptr) {
+        if (block->bottom->shape == EMPTY) {
+            empty++;
+        }
+    }
+    return empty;
+}
 
 int main() {
     bool moved = false;
@@ -40,27 +66,37 @@ int main() {
     // Save the removed blocks into a dynamic array.
     field[start_pos_x][start_pos_y].shape = EMPTY;
     int removed_blocks = 1;
+    int newly_removed = 0;
     // Array of removed blocks.
     // todo free the array when done.
     ELEMENT *ptr = calloc(1, sizeof(ELEMENT));
     ptr[0] = field[start_pos_x][start_pos_y];
+
+    draw_game_screen(SIZE, SIZE, 5, SIZE, field, "None", false);
 
     bool block_removed = true;
     while (block_removed) {
         int random_direction = 0;
         for (int i = 0; i < removed_blocks; i++) {
             random_direction = rand() % 4;
+            newly_removed = 0;
             switch (random_direction) {
                 case 0:
                     // up
-                    // todo check blok removability.
                     // todo separate to a function?
                     // todo ignore blocks we have already seen
                     if (ptr[i].top != nullptr) {
+                        // todo check block removability.
+                        if (ptr[i].top->shape == EMPTY) {
+                            break;
+                        }
+                        if (count_empty_neighbors(ptr[i].top) > 1) {
+                            break;
+                        }
                         ptr[i].top->shape = EMPTY;
                         block_removed = true;
-                        removed_blocks++;
-                        ptr = realloc(ptr, removed_blocks * sizeof(ELEMENT));
+                        newly_removed++;
+                        ptr = realloc(ptr, (removed_blocks+1)  * sizeof(ELEMENT));
                         if (ptr == NULL) {
                             printf("Memory Reallocation Failed");
                             exit(1);
@@ -72,10 +108,16 @@ int main() {
                 case 1:
                     // down
                     if (ptr[i].bottom != nullptr) {
+                        if (ptr[i].bottom->shape == EMPTY) {
+                            break;
+                        }
+                        if (count_empty_neighbors(ptr[i].bottom) > 1) {
+                            break;
+                        }
                         ptr[i].bottom->shape = EMPTY;
                         block_removed = true;
-                        removed_blocks++;
-                        ptr = realloc(ptr, removed_blocks * sizeof(ELEMENT));
+                        newly_removed++;
+                        ptr = realloc(ptr, (removed_blocks+1)  * sizeof(ELEMENT));
                         if (ptr == NULL) {
                             printf("Memory Reallocation Failed");
                             exit(1);
@@ -86,10 +128,16 @@ int main() {
                 case 2:
                     // left
                     if (ptr[i].left != nullptr) {
+                        if (ptr[i].left->shape == EMPTY) {
+                            break;
+                        }
+                        if (count_empty_neighbors(ptr[i].left) > 1) {
+                            break;
+                        }
                         ptr[i].left->shape = EMPTY;
                         block_removed = true;
-                        removed_blocks++;
-                        ptr = realloc(ptr, removed_blocks * sizeof(ELEMENT));
+                        newly_removed++;
+                        ptr = realloc(ptr, (removed_blocks+1)  * sizeof(ELEMENT));
                         if (ptr == NULL) {
                             printf("Memory Reallocation Failed");
                             exit(1);
@@ -100,10 +148,16 @@ int main() {
                 case 3:
                     // right
                     if (ptr[i].right != nullptr) {
+                        if (ptr[i].right->shape == EMPTY) {
+                            break;
+                        }
+                        if (count_empty_neighbors(ptr[i].right) > 1) {
+                            break;
+                        }
                         ptr[i].right->shape = EMPTY;
                         block_removed = true;
-                        removed_blocks++;
-                        ptr = realloc(ptr, removed_blocks * sizeof(ELEMENT));
+                        newly_removed++;
+                        ptr = realloc(ptr, (removed_blocks+1)  * sizeof(ELEMENT));
                         if (ptr == NULL) {
                             printf("Memory Reallocation Failed");
                             exit(1);
@@ -115,6 +169,8 @@ int main() {
                     break;
             }
         }
+        removed_blocks += newly_removed;
+        //sleep(1);
         draw_game_screen(SIZE, SIZE, 5, SIZE, field, "None", false);
     }
 
