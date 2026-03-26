@@ -5,7 +5,7 @@
 
 #include "display.h"
 
-#define SIZE 20
+#define SIZE 10
 #define WALL '#'
 #define EMPTY ' '
 #define PLAYER '0'
@@ -55,18 +55,15 @@ int main() {
     ELEMENT field[SIZE][SIZE];
     init_grid(SIZE, SIZE, field, WALL, field_color);
 
-    // todo generate a maze in the field. Pick random position and use it as a starting point.
-    //   Select random direction and see if it can be removed.
-    //   Go through all free positions and remove blocks until nothing can be removed.
     // Init rand function.
     srand(time(nullptr));
     int start_pos_x = rand() % SIZE;
     int start_pos_y = rand() % SIZE;
 
-    // Save the removed blocks into a dynamic array.
+    // Set starting position.
     field[start_pos_x][start_pos_y].shape = EMPTY;
     int removed_blocks = 1;
-    int newly_removed = 0;
+    int position_in_index = 0;
     // Array of removed blocks.
     // todo free the array when done.
     ELEMENT *ptr = calloc(1, sizeof(ELEMENT));
@@ -74,104 +71,126 @@ int main() {
 
     draw_game_screen(SIZE, SIZE, 5, SIZE, field, "None", false);
 
-    bool block_removed = true;
-    while (block_removed) {
-        int random_direction = 0;
-        for (int i = 0; i < removed_blocks; i++) {
+    while (true) {
+        // todo advance to the next empty block and drill from there?
+        // todo this has to move up by only 1 on next pass.
+        int index = 0;
+        index += position_in_index;
+        position_in_index++;
+        bool change = true;
+        while (change) {
+            int random_direction = 0;
             random_direction = rand() % 4;
-            newly_removed = 0;
+            // todo drill one tunnel until you can not anymore.
             switch (random_direction) {
                 case 0:
                     // up
                     // todo separate to a function?
-                    // todo ignore blocks we have already seen
-                    if (ptr[i].top != nullptr) {
+                    if (ptr[index].top != nullptr) {
                         // todo check block removability.
-                        if (ptr[i].top->shape == EMPTY) {
+                        if (ptr[index].top->shape == EMPTY) {
+                            change = false;
                             break;
                         }
-                        if (count_empty_neighbors(ptr[i].top) > 1) {
+                        if (count_empty_neighbors(ptr[index].top) > 1) {
+                            change = false;
                             break;
                         }
-                        ptr[i].top->shape = EMPTY;
-                        block_removed = true;
-                        newly_removed++;
+                        ptr[index].top->shape = EMPTY;
+                        change = true;
                         ptr = realloc(ptr, (removed_blocks+1)  * sizeof(ELEMENT));
                         if (ptr == NULL) {
                             printf("Memory Reallocation Failed");
                             exit(1);
                         }
                         // value copy. We save the whole elements, not just their addresses.
-                        ptr[i+1] = *ptr[i].top;
+                        // Move position to the newly cerated empty block.
+                        ptr[index+1] = *ptr[index].top;
+                        index++;
+                        removed_blocks++;
                     }
                     break;
                 case 1:
                     // down
-                    if (ptr[i].bottom != nullptr) {
-                        if (ptr[i].bottom->shape == EMPTY) {
+                    if (ptr[index].bottom != nullptr) {
+                        if (ptr[index].bottom->shape == EMPTY) {
+                            change = false;
                             break;
                         }
-                        if (count_empty_neighbors(ptr[i].bottom) > 1) {
+                        if (count_empty_neighbors(ptr[index].bottom) > 1) {
+                            change = false;
                             break;
                         }
-                        ptr[i].bottom->shape = EMPTY;
-                        block_removed = true;
-                        newly_removed++;
+                        ptr[index].bottom->shape = EMPTY;
+                        change = true;
                         ptr = realloc(ptr, (removed_blocks+1)  * sizeof(ELEMENT));
                         if (ptr == NULL) {
                             printf("Memory Reallocation Failed");
                             exit(1);
                         }
-                        ptr[i+1] = *ptr[i].bottom;
+                        // value copy. We save the whole elements, not just their addresses.
+                        // Move position to the newly cerated empty block.
+                        ptr[index+1] = *ptr[index].bottom;
+                        index++;
+                        removed_blocks++;
                     }
                     break;
                 case 2:
                     // left
-                    if (ptr[i].left != nullptr) {
-                        if (ptr[i].left->shape == EMPTY) {
+                    if (ptr[index].left != nullptr) {
+                        if (ptr[index].left->shape == EMPTY) {
+                            change = false;
                             break;
                         }
-                        if (count_empty_neighbors(ptr[i].left) > 1) {
+                        if (count_empty_neighbors(ptr[index].left) > 1) {
+                            change = false;
                             break;
                         }
-                        ptr[i].left->shape = EMPTY;
-                        block_removed = true;
-                        newly_removed++;
+                        ptr[index].left->shape = EMPTY;
+                        change = true;
                         ptr = realloc(ptr, (removed_blocks+1)  * sizeof(ELEMENT));
                         if (ptr == NULL) {
                             printf("Memory Reallocation Failed");
                             exit(1);
                         }
-                        ptr[i+1] = *ptr[i].left;
+                        // value copy. We save the whole elements, not just their addresses.
+                        // Move position to the newly cerated empty block.
+                        ptr[index+1] = *ptr[index].left;
+                        index++;
+                        removed_blocks++;
                     }
                     break;
                 case 3:
                     // right
-                    if (ptr[i].right != nullptr) {
-                        if (ptr[i].right->shape == EMPTY) {
+                    if (ptr[index].right != nullptr) {
+                        if (ptr[index].right->shape == EMPTY) {
+                            change = false;
                             break;
                         }
-                        if (count_empty_neighbors(ptr[i].right) > 1) {
+                        if (count_empty_neighbors(ptr[index].right) > 1) {
+                            change = false;
                             break;
                         }
-                        ptr[i].right->shape = EMPTY;
-                        block_removed = true;
-                        newly_removed++;
+                        ptr[index].right->shape = EMPTY;
+                        change = true;
                         ptr = realloc(ptr, (removed_blocks+1)  * sizeof(ELEMENT));
                         if (ptr == NULL) {
                             printf("Memory Reallocation Failed");
                             exit(1);
                         }
-                        ptr[i+1] = *ptr[i].right;
+                        // value copy. We save the whole elements, not just their addresses.
+                        // Move position to the newly cerated empty block.
+                        ptr[index+1] = *ptr[index].right;
+                        index++;
+                        removed_blocks++;
                     }
                     break;
                 default:
                     break;
             }
+            usleep(300000);
+            draw_game_screen(SIZE, SIZE, 5, SIZE, field, "None", false);
         }
-        removed_blocks += newly_removed;
-        //sleep(1);
-        draw_game_screen(SIZE, SIZE, 5, SIZE, field, "None", false);
     }
 
     char *items[2];
