@@ -261,6 +261,7 @@ ELEMENT* move_player_up(const int x_length, const int y_length, ELEMENT field[x_
         player->top->shape = shape;
         player->top->color_pair = color_pair;
         moved = true;
+        return player->top;
     }
     return player;
 }
@@ -279,6 +280,7 @@ ELEMENT* move_player_down(const int x_length, const int y_length, ELEMENT field[
         player->bottom->shape = shape;
         player->bottom->color_pair = color_pair;
         moved = true;
+        return player->bottom;
     }
     return player;
 }
@@ -297,6 +299,7 @@ ELEMENT* move_player_left(const int x_length, const int y_length, ELEMENT field[
         player->left->shape = shape;
         player->left->color_pair = color_pair;
         moved = true;
+        return player->left;
     }
     return player;
 }
@@ -315,6 +318,7 @@ ELEMENT* move_player_right(const int x_length, const int y_length, ELEMENT field
         player->right->shape = shape;
         player->right->color_pair = color_pair;
         moved = true;
+        return player->right;
     }
     return player;
 }
@@ -378,6 +382,7 @@ void draw_game_screen(const int game_x_length, const int game_y_length, const in
     }
 
     set_current_color(score_window, score_color);
+    // todo split the string by \n?
     mvwaddnstr(score_window, 1, 1, score, game_y_length);
     set_current_color(score_window, DEFAULT_SCORE_COLOR);
 

@@ -5,7 +5,7 @@
 
 #include "display.h"
 
-#define SIZE 10
+#define SIZE 30
 #define WALL '#'
 #define EMPTY ' '
 #define PLAYER '0'
@@ -91,22 +91,52 @@ int main() {
     field[start_pos_x][start_pos_y].shape = EMPTY;
     // List of removed blocks. // todo free the array when done.
     int counter = 0;
+    int starting_position = 0;
+    int stop_counter = (SIZE * SIZE) * 3;
+
     ELEMENT *ptr = calloc(1, sizeof(ELEMENT));
     ptr[counter] = field[start_pos_x][start_pos_y];
-    ELEMENT *current_position = &field[start_pos_x][start_pos_y];
+    ELEMENT *current_position = &ptr[starting_position];
 
-    draw_game_screen(SIZE, SIZE, 5, SIZE, field, "None", false);
+    char *items[2];
+    items[0] = "Start";
+    items[1] = "Quit";
 
-    while (true) {
+    const int choice = draw_menu(2, items, 0);
+    if (choice == 1) {
+        end();
+        return 0;
+    }
+
+    draw_game_screen(SIZE, SIZE, 5, SIZE, field, "Building...",
+        false);
+
+    while (stop_counter >= 0) {
         short random_direction = 0;
         random_direction = rand() % 4;
         ELEMENT *next = get_neighbor(current_position, random_direction);
 
         if (next == nullptr) {
+            // Edge of the level.
+            starting_position++;
+            if (starting_position > counter) {
+                current_position = &ptr[0];
+                starting_position = 0;
+            } else {
+                // Advance to next position when current path is drilled.
+                current_position = &ptr[starting_position];
+            }
             continue;
         }
         if (count_empty_neighbors(next) > 1) {
-            // Skip removing this block.
+            // Block has blank spaces on other sides.
+            starting_position++;
+            if (starting_position > counter) {
+                current_position = &ptr[0];
+                starting_position = 0;
+            } else {
+                current_position = &ptr[starting_position];
+            }
             continue;
         } if (next != nullptr) {
             if (next->shape != EMPTY) {
@@ -125,31 +155,24 @@ int main() {
                 // Move to the new position.
                 current_position = next;
             }
-        } else {
-            // advance to next position.
-            puts("next position");
         }
-        usleep(20000);
-        draw_game_screen(SIZE, SIZE, 5, SIZE, field, "None", false);
+        usleep(1000);
+        draw_game_screen(SIZE, SIZE, 5, SIZE, field, "Building...",
+            false);
+        stop_counter--;
     }
 
-    char *items[2];
-    items[0] = "Start";
-    items[1] = "Quit";
+    // todo place finish and breath search if accessible.
+    // todo add score
 
-    const int choice = draw_menu(2, items, 0);
-    if (choice == 1) {
-        end();
-        return 0;
-    }
+    // Place player once ready.
+    player_location = &field[0][0];
+    player_location->shape = PLAYER;
+    player_location->color_pair = player_color;
+    set_player_character(PLAYER);
 
-    // todo place player once ready.
-    //player_location = &field[5][5];
-    //player_location->shape = PLAYER;
-    //player_location->color_pair = player_color;
-    //set_player_character(PLAYER);
-
-    draw_game_screen(SIZE, SIZE, 5, SIZE, field, "None", false);
+    draw_game_screen(SIZE, SIZE, 5, SIZE, field,
+        "Ready.\nWSAD to move, Q to quit.\nScore: 0", false);
     // todo changes on resize, call after each draw screen?
     game_area = get_play_area_window();
     if (game_area == nullptr) {
@@ -163,25 +186,40 @@ int main() {
         keyboard_input = wgetch(game_area);
         switch (keyboard_input) {
             case 'w':
+                if (player_location->top != nullptr && player_location->top->shape == WALL) {
+                    break;
+                }
                 player_location = move_player_up(SIZE, SIZE, field);
                 break;
+
             case 's':
+                if (player_location->bottom != nullptr && player_location->bottom->shape == WALL) {
+                    break;
+                }
                 player_location = move_player_down(SIZE, SIZE, field);
                 break;
+
             case 'a':
+                if (player_location->left != nullptr && player_location->left->shape == WALL) {
+                    break;
+                }
                 player_location = move_player_left(SIZE, SIZE, field);
                 break;
+
             case 'd':
+                if (player_location->right != nullptr && player_location->right->shape == WALL) {
+                    break;
+                }
                 player_location = move_player_right(SIZE, SIZE, field);
                 break;
+
             case 'q':
                 run = false;
                 break;
+
             default:
                 break;
         }
-        moved = player_moved();
-        mvprintw(0, 0, "%d ", moved);
 
         draw_game_screen(SIZE, SIZE, 5, SIZE, field, "None", false);
     }
