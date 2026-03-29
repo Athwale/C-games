@@ -2,16 +2,34 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <wchar.h>
+#include <locale.h>
 
 #include "display.h"
 
-#define SIZE 30
-#define WALL '#'
+// 54 max.
+#define SIZE 54
+#define WALL L'\u2588'
 #define EMPTY ' '
 #define PLAYER '0'
+#define END 'O'
 
 ELEMENT *player_location = nullptr;
 WINDOW *game_area= nullptr;
+
+bool insert_node(const int length, ELEMENT *nodes[length], ELEMENT *node) {
+    int i = 0;
+    for (; i < length; i++) {
+        if (nodes[i] == node) {
+            return false;
+        }
+        if (nodes[i] == nullptr) {
+            nodes[i] = node;
+            return true;
+        }
+    }
+    return false;
+}
 
 int count_empty_neighbors(const ELEMENT *block) {
     int empty = 0;
@@ -66,7 +84,8 @@ ELEMENT* get_neighbor(const ELEMENT *block, const short direction) {
 }
 
 int main() {
-    bool moved = false;
+    // Needed for wchar.
+    setlocale(LC_ALL, "");
     int keyboard_input = '\0';
 
     start();
@@ -75,6 +94,9 @@ int main() {
     const short player_color = add_color(COLOR_YELLOW,-1);
     const short score_color = add_color(COLOR_GREEN,-1);
     const short score_border_color = add_color(COLOR_GREEN,-1);
+    const short finish_color = add_color(COLOR_CYAN,-1);
+    const short search_color = add_color(COLOR_RED,-1);
+
     set_border_color(border_color);
     set_score_color(score_color);
     set_score_border_color(score_border_color);
@@ -89,14 +111,14 @@ int main() {
 
     // Set starting position.
     field[start_pos_x][start_pos_y].shape = EMPTY;
-    // List of removed blocks. // todo free the array when done.
     int counter = 0;
     int starting_position = 0;
     int stop_counter = (SIZE * SIZE) * 3;
 
+    // List of removed blocks. // todo free the array when done.
     ELEMENT *ptr = calloc(1, sizeof(ELEMENT));
     ptr[counter] = field[start_pos_x][start_pos_y];
-    ELEMENT *current_position = &ptr[starting_position];
+    const ELEMENT *current_position = &ptr[starting_position];
 
     char *items[2];
     items[0] = "Start";
@@ -144,11 +166,14 @@ int main() {
 
                 // Save the removed block into list.
                 counter++;
-                ptr = realloc(ptr, (counter+1)  * sizeof(ELEMENT));
-                if (ptr == NULL) {
-                    printf("Memory Reallocation Failed");
+                ELEMENT *temp = realloc(ptr, (counter + 1) * sizeof(ELEMENT));
+                if (temp == NULL) {
+                    // Clean up original memory before exiting
+                    free(ptr);
+                    fprintf(stderr, "Memory Reallocation Failed");
                     exit(1);
                 }
+                ptr = temp;
                 // Save the dereferenced copy.
                 ptr[counter] = *next;
 
@@ -161,15 +186,74 @@ int main() {
             false);
         stop_counter--;
     }
+    free(ptr);
+    ptr = nullptr;
 
+    // Search if the finish is reachable from the start.
+    // todo size must be the amount of free spaces but would have to be dynamic.
+    // todo check if we have reached the end.
+    ELEMENT *nodes[SIZE * SIZE] = {};
+    nodes[0] = &field[0][0];
+    // This the number of empty spaces.
+    const int top = counter;
+    counter = 1;
+    int discovered = 0;
+
+    for (int j =0; j<top; j++) {
+        discovered = 0;
+        for (int i = 0; i < counter; i++) {
+            if (nodes[i] != nullptr && nodes[i]->shape != '+' && nodes[i]->shape != WALL) {
+                nodes[i]->shape = '+';
+                nodes[i]->color_pair = search_color;
+                // Save all empty neighbors to nodes.
+                if (nodes[i]->top != nullptr && nodes[i]->top->shape != '+') {
+                    if (insert_node(SIZE * SIZE, nodes, nodes[i]->top)) {
+                        discovered++;
+                    }
+                }
+                if (nodes[i]->left != nullptr && nodes[i]->left->shape != '+') {
+                    if (insert_node(SIZE * SIZE, nodes, nodes[i]->left)) {
+                        discovered++;
+                    }
+                }
+                if (nodes[i]->right != nullptr && nodes[i]->right->shape != '+') {
+                    if (insert_node(SIZE * SIZE, nodes, nodes[i]->right)) {
+                        discovered++;
+                    }
+                }
+                if (nodes[i]->bottom != nullptr && nodes[i]->bottom->shape != '+') {
+                    if (insert_node(SIZE * SIZE, nodes, nodes[i]->bottom)) {
+                        discovered++;
+                    }
+                }
+                usleep(1000);
+                draw_game_screen(SIZE, SIZE, 5, SIZE, field,
+                    "Checking...", false);
+            }
+        }
+        counter += discovered;
+    }
     // todo place finish and breath search if accessible.
     // todo add score
+
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (field[i][j].shape == '+') {
+                field[i][j].shape = EMPTY;
+            }
+        }
+    }
 
     // Place player once ready.
     player_location = &field[0][0];
     player_location->shape = PLAYER;
     player_location->color_pair = player_color;
     set_player_character(PLAYER);
+
+    // Place finish.
+    player_location = &field[SIZE-1][SIZE-1];
+    player_location->shape = END;
+    player_location->color_pair = finish_color;
 
     draw_game_screen(SIZE, SIZE, 5, SIZE, field,
         "Ready.\nWSAD to move, Q to quit.\nScore: 0", false);

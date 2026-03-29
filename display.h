@@ -3,13 +3,13 @@
 // Structure for colored play area elements:
 // int pos_x
 // int pos_y
-// char shape
+// wchar_t shape
 // short color_pair
 typedef struct element {
     unsigned long int id;
     unsigned int pos_x;
     unsigned int pos_y;
-    char shape;
+    wchar_t shape;
     short color_pair;
     struct element *top;
     struct element *bottom;
@@ -32,8 +32,8 @@ void set_score_border_color(short color_pair_number);
 void start();
 void end();
 static void terminal_too_small();
-void init_grid(int x_length, int y_length, ELEMENT field[x_length][y_length], char background_char, short color);
-void set_player_character(char character);
+void init_grid(int x_length, int y_length, ELEMENT field[x_length][y_length], wchar_t background_char, short color);
+void set_player_character(wchar_t character);
 ELEMENT* move_player_up(int x_length, int y_length, ELEMENT field[x_length][y_length]);
 ELEMENT* move_player_down(int x_length, int y_length, ELEMENT field[x_length][y_length]);
 ELEMENT* move_player_left(int x_length, int y_length, ELEMENT field[x_length][y_length]);

@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wchar.h>
+#include <locale.h>
 #include "display.h"
 
 #define DEFAULT_BORDER_COLOR 1
@@ -20,7 +22,7 @@ short score_border_color = 0;
 short border_color = 0;
 int lines = 0;
 int cols = 0;
-char player_character = '\0';
+wchar_t player_character = '\0';
 bool moved = false;
 
 // todo document all functions.
@@ -30,11 +32,11 @@ bool player_moved() {
     return moved;
 }
 
-void set_player_character(const char character) {
+void set_player_character(const wchar_t character) {
     player_character = character;
 }
 
-void init_grid(const int x_length, const int y_length, ELEMENT field[x_length][y_length], const char background_char, const short color) {
+void init_grid(const int x_length, const int y_length, ELEMENT field[x_length][y_length], const wchar_t background_char, const short color) {
     // X increases downwards, Y increases to the right.
     // Field IDs.
     // i:  0, x: 0, y: 0 i:  1, x: 0, y: 1 i:  2, x: 0, y: 2 i:  3, x: 0, y: 3 i:  4, x: 0, y: 4 i:  5, x: 0, y: 5 i:  6, x: 0, y: 6 i:  7, x: 0, y: 7 i:  8, x: 0, y: 8 i:  9, x: 0, y: 9
@@ -252,7 +254,7 @@ ELEMENT* move_player_up(const int x_length, const int y_length, ELEMENT field[x_
     moved = false;
     if (player->top != nullptr) {
         // Switch positions.
-        const char shape = player->shape;
+        const wchar_t shape = player->shape;
         const short color_pair = player->color_pair;
 
         player->shape = player->top->shape;
@@ -271,7 +273,7 @@ ELEMENT* move_player_down(const int x_length, const int y_length, ELEMENT field[
     moved = false;
     if (player->bottom != nullptr) {
         // Switch positions.
-        const char shape = player->shape;
+        const wchar_t shape = player->shape;
         const short color_pair = player->color_pair;
 
         player->shape = player->bottom->shape;
@@ -290,7 +292,7 @@ ELEMENT* move_player_left(const int x_length, const int y_length, ELEMENT field[
     moved = false;
     if (player->left != nullptr) {
         // Switch positions.
-        const char shape = player->shape;
+        const wchar_t shape = player->shape;
         const short color_pair = player->color_pair;
 
         player->shape = player->left->shape;
@@ -309,7 +311,7 @@ ELEMENT* move_player_right(const int x_length, const int y_length, ELEMENT field
     moved = false;
     if (player->right != nullptr) {
         // Switch positions.
-        const char shape = player->shape;
+        const wchar_t shape = player->shape;
         const short color_pair = player->color_pair;
 
         player->shape = player->right->shape;
