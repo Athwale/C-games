@@ -328,7 +328,7 @@ ELEMENT* move_player_right(const int x_length, const int y_length, ELEMENT field
 // x_length - vertical
 // y_length - horizontal
 void draw_game_screen(const int game_x_length, const int game_y_length, const int score_x_length,
-    const int score_y_length, const ELEMENT area[game_x_length][game_y_length], const char score[], bool id) {
+    const int score_y_length, const ELEMENT area[game_x_length][game_y_length], const char score[], const int value, bool id) {
     if (!initialized) {
         fprintf(stderr,"start() must be called first\n");
         exit(EXIT_FAILURE);
@@ -365,27 +365,29 @@ void draw_game_screen(const int game_x_length, const int game_y_length, const in
         set_current_color(game_window, border_color);
         box(game_window, 0, 0);
         set_current_color(game_window, DEFAULT_BORDER_COLOR);
-
-        set_current_color(score_window, score_border_color);
-        box(score_window, 0, 0);
-        set_current_color(score_window, DEFAULT_BORDER_COLOR);
     }
+
+    wclear(score_window);
+    set_current_color(score_window, score_border_color);
+    box(score_window, 0, 0);
+    set_current_color(score_window, DEFAULT_BORDER_COLOR);
 
     // These coordinates are relative to the new window.
     for (int i = 0; i < game_x_length; i++) {
         for (int j = 0; j < game_y_length; j++) {
             set_current_color(game_window, area[i][j].color_pair);
             if (id) {
+                // TODO HERE THE SCREEN IS TWO CHARS WIDER
                 mvwprintw(game_window, i+1, j+2, "%lu ", area[i][j].id);
             } else {
-                mvwaddch(game_window, i+1, j+2, area[i][j].shape);
+                mvwaddch(game_window, i+1, j+1, area[i][j].shape);
             }
         }
     }
 
     set_current_color(score_window, score_color);
     // todo split the string by \n?
-    mvwaddnstr(score_window, 1, 1, score, game_y_length);
+    mvwprintw(score_window, 1, 2, "%s:%d", score, value);
     set_current_color(score_window, DEFAULT_SCORE_COLOR);
 
     touchwin(win);
@@ -465,6 +467,7 @@ void draw_end_screen(const int score) {
     }
 
     wclear(game_window);
+    wclear(score_window);
 
     char message[50] = {};
     snprintf(message, 50, "Final score: %d", score);
@@ -474,12 +477,18 @@ void draw_end_screen(const int score) {
     const int pos_y = COLS / 2 - (int)strlen(message) / 2;
     // Win is the parent. Height, width, x, y
     endscreen = subwin(win, 4, (int)strlen(message) + 2, pos_x, pos_y);
+    box(endscreen, 0, 0);
     keypad(endscreen, TRUE);
 
     mvwaddstr(endscreen, 1, 1, message);
     mvwaddstr(endscreen, 2, 1, "Press any key");
 
+    wrefresh(game_window);
+    wrefresh(score_window);
+    wrefresh(endscreen);
+    refresh();
     wgetch(endscreen);
+
     wclear(endscreen);
     delwin(endscreen);
 }

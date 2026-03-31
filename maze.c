@@ -8,13 +8,14 @@
 #include "display.h"
 
 // 54 max.
-#define SIZE 54
+#define SIZE 10
 #define WALL L'\u2588'
 #define EMPTY ' '
 #define PLAYER '0'
 #define END 'O'
 
 ELEMENT *player_location = nullptr;
+ELEMENT *finish_location = nullptr;
 WINDOW *game_area= nullptr;
 
 bool insert_node(const int length, ELEMENT *nodes[length], ELEMENT *node) {
@@ -87,6 +88,7 @@ int main() {
     // Needed for wchar.
     setlocale(LC_ALL, "");
     int keyboard_input = '\0';
+    int steps = 0;
 
     start();
     const short border_color = add_color(COLOR_RED, -1);
@@ -130,7 +132,7 @@ int main() {
         return 0;
     }
 
-    draw_game_screen(SIZE, SIZE, 5, SIZE, field, "Building...",
+    draw_game_screen(SIZE, SIZE, 5, SIZE, field, "Building", 1,
         false);
 
     while (stop_counter >= 0) {
@@ -182,7 +184,7 @@ int main() {
             }
         }
         usleep(1000);
-        draw_game_screen(SIZE, SIZE, 5, SIZE, field, "Building...",
+        draw_game_screen(SIZE, SIZE, 5, SIZE, field, "Building", 1,
             false);
         stop_counter--;
     }
@@ -228,7 +230,7 @@ int main() {
                 }
                 usleep(1000);
                 draw_game_screen(SIZE, SIZE, 5, SIZE, field,
-                    "Checking...", false);
+                    "Checking", 1, false);
             }
         }
         counter += discovered;
@@ -251,12 +253,12 @@ int main() {
     set_player_character(PLAYER);
 
     // Place finish.
-    player_location = &field[SIZE-1][SIZE-1];
-    player_location->shape = END;
-    player_location->color_pair = finish_color;
+    finish_location = &field[SIZE-1][SIZE-1];
+    finish_location->shape = END;
+    finish_location->color_pair = finish_color;
 
     draw_game_screen(SIZE, SIZE, 5, SIZE, field,
-        "Ready.\nWSAD to move, Q to quit.\nScore: 0", false);
+        "Ready.\nWSAD to move, Q to quit.\nScore", 0, false);
     // todo changes on resize, call after each draw screen?
     game_area = get_play_area_window();
     if (game_area == nullptr) {
@@ -266,6 +268,7 @@ int main() {
     }
 
     bool run = true;
+    bool win = false;
     while (run) {
         keyboard_input = wgetch(game_area);
         switch (keyboard_input) {
@@ -304,8 +307,20 @@ int main() {
             default:
                 break;
         }
+        if (player_location->pos_x == finish_location->pos_x && player_location->pos_y == finish_location->pos_y) {
+            run = false;
+            win = true;
+        }
+        if (player_moved()) {
+            steps++;
+        }
+        draw_game_screen(SIZE, SIZE, 5, SIZE, field, "Steps", steps, false);
+        // todo edges are not accessible. The screen is 2 chars wider.
+        mvwaddch(game_area, 1, 1, 'T');
+    }
 
-        draw_game_screen(SIZE, SIZE, 5, SIZE, field, "None", false);
+    if (win) {
+        draw_end_screen(1);
     }
 
     end();
