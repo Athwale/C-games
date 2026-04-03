@@ -328,7 +328,7 @@ ELEMENT* move_player_right(const int x_length, const int y_length, ELEMENT field
 // x_length - vertical
 // y_length - horizontal
 void draw_game_screen(const int game_x_length, const int game_y_length, const int score_x_length,
-    const int score_y_length, const ELEMENT area[game_x_length][game_y_length], const char score[], const int value, bool id) {
+    const int score_y_length, const ELEMENT area[game_x_length][game_y_length], char score[], const int value, bool id) {
     if (!initialized) {
         fprintf(stderr,"start() must be called first\n");
         exit(EXIT_FAILURE);
@@ -386,8 +386,13 @@ void draw_game_screen(const int game_x_length, const int game_y_length, const in
     }
 
     set_current_color(score_window, score_color);
-    // todo split the string by \n?
-    mvwprintw(score_window, 1, 2, "%s:%d", score, value);
+    char *part;
+    char *str = strdup(score);
+    int line = 1;
+    while ((part = strsep(&str,"\n")) != NULL) {
+        mvwprintw(score_window, line, 2, "%s", part);
+        line++;
+    }
     set_current_color(score_window, DEFAULT_SCORE_COLOR);
 
     touchwin(win);

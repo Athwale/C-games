@@ -8,7 +8,7 @@
 #include "display.h"
 
 // 54 max.
-#define SIZE 10
+#define SIZE 30
 #define WALL L'\u2588'
 #define EMPTY ' '
 #define PLAYER '0'
@@ -258,7 +258,7 @@ int main() {
     finish_location->color_pair = finish_color;
 
     draw_game_screen(SIZE, SIZE, 5, SIZE, field,
-        "Ready.\nWSAD to move, Q to quit.\nScore", 0, false);
+        "Ready.\nWSAD to move, Q to quit.\nSteps: 0", 0, false);
     // todo changes on resize, call after each draw screen?
     game_area = get_play_area_window();
     if (game_area == nullptr) {
