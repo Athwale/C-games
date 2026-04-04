@@ -9,7 +9,7 @@ typedef struct element {
     unsigned long int id;
     unsigned int pos_x;
     unsigned int pos_y;
-    wchar_t shape;
+    cchar_t shape;
     short color_pair;
     struct element *top;
     struct element *bottom;

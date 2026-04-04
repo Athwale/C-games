@@ -1,24 +1,22 @@
-#include <ncurses.h>
-#include "display.h"
+#define _XOPEN_SOURCE_EXTENDED
+#include <ncursesw/ncurses.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "display.h"
 
-#define SIZE 20
+#define SIZE 10
+#define WALL L'\u2588'
+#define WALL L'Ƿ'
+//#define WALL L'#'
 
 int main(void) {
     // Test functionality.
     start();
+    // todo colors do not work with the Unicode chars.
+    const short field_color = add_color(COLOR_GREEN,-1);
 
-    const short element_color = add_color(COLOR_YELLOW, -1);
-    ELEMENT arr[SIZE][SIZE] = {};
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
-            arr[i][j].pos_x = i;
-            arr[i][j].pos_y = j;
-            arr[i][j].shape = '$';
-            arr[i][j].color_pair = element_color;
-        }
-    }
+    ELEMENT field[SIZE][SIZE];
+    init_grid(SIZE, SIZE, field, WALL, field_color);
 
     char *menu_items[5];
     menu_items[0] = "test1";
@@ -33,9 +31,8 @@ int main(void) {
 
     int result = draw_menu(5, menu_items, 0);
     printf(" %d ", result);
-    draw_game_screen(SIZE, SIZE, arr, "SCORE LINE");
-    sleep(1);
-    end_game_screen();
+    draw_game_screen(SIZE, SIZE, 5, SIZE, field, "Test", 1,false);
+    sleep(5);
     draw_end_screen(1000000000);
 
     end();

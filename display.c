@@ -1,8 +1,7 @@
-#include <ncurses.h>
+#define _XOPEN_SOURCE_EXTENDED
+#include <ncursesw/ncurses.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <wchar.h>
 #include <locale.h>
 #include "display.h"
 
@@ -22,7 +21,9 @@ short score_border_color = 0;
 short border_color = 0;
 int lines = 0;
 int cols = 0;
-wchar_t player_character = '\0';
+wchar_t w_player_character;
+wchar_t w_background_character;
+cchar_t c_player_character;
 bool moved = false;
 
 // todo document all functions.
@@ -33,7 +34,7 @@ bool player_moved() {
 }
 
 void set_player_character(const wchar_t character) {
-    player_character = character;
+    w_player_character = character;
 }
 
 void init_grid(const int x_length, const int y_length, ELEMENT field[x_length][y_length], const wchar_t background_char, const short color) {
@@ -52,13 +53,14 @@ void init_grid(const int x_length, const int y_length, ELEMENT field[x_length][y
     // Going left to right then next row.
     // Modifies the ELEMENT array in place.
     int count = 0;
+    w_background_character = background_char;
     for (int x = 0; x < x_length; x++) {
         for (int y = 0; y < y_length; y++) {
             // Fill adjacent block pointers.
             field[x][y].id = count;
             field[x][y].pos_x = x;
             field[x][y].pos_y = y;
-            field[x][y].shape = background_char;
+            setcchar(&field[x][y].shape, &w_background_character, 0, color, nullptr);
             field[x][y].color_pair = color;
 
             if (field[x][y].pos_x == 0 && field[x][y].pos_y == 0) {
@@ -226,7 +228,10 @@ WINDOW *get_play_area_window()
 }
 
 static ELEMENT* find_player(const int x_length, const int y_length, ELEMENT field[x_length][y_length]) {
-    if (player_character == '\0') {
+    wchar_t player_ch;
+    wchar_t shape_ch;
+    getcchar(&c_player_character, &player_ch, nullptr, nullptr, nullptr);
+    if (player_ch == '\0') {
         end();
         fprintf(stderr,"Player character is not set.\n");
         exit(EXIT_FAILURE);
@@ -236,7 +241,8 @@ static ELEMENT* find_player(const int x_length, const int y_length, ELEMENT fiel
     ELEMENT *player = nullptr;
     for (int x = 0; x < x_length; x++) {
         for (int y = 0; y < y_length; y++) {
-            if (field[x][y].shape == player_character) {
+            getcchar(&field[x][y].shape, &shape_ch, nullptr, nullptr, nullptr);
+            if (shape_ch == player_ch) {
                 player = &field[x][y];
             }
         }
@@ -254,7 +260,7 @@ ELEMENT* move_player_up(const int x_length, const int y_length, ELEMENT field[x_
     moved = false;
     if (player->top != nullptr) {
         // Switch positions.
-        const wchar_t shape = player->shape;
+        const cchar_t shape = player->shape;
         const short color_pair = player->color_pair;
 
         player->shape = player->top->shape;
@@ -273,7 +279,7 @@ ELEMENT* move_player_down(const int x_length, const int y_length, ELEMENT field[
     moved = false;
     if (player->bottom != nullptr) {
         // Switch positions.
-        const wchar_t shape = player->shape;
+        const cchar_t shape = player->shape;
         const short color_pair = player->color_pair;
 
         player->shape = player->bottom->shape;
@@ -292,7 +298,7 @@ ELEMENT* move_player_left(const int x_length, const int y_length, ELEMENT field[
     moved = false;
     if (player->left != nullptr) {
         // Switch positions.
-        const wchar_t shape = player->shape;
+        const cchar_t shape = player->shape;
         const short color_pair = player->color_pair;
 
         player->shape = player->left->shape;
@@ -311,7 +317,7 @@ ELEMENT* move_player_right(const int x_length, const int y_length, ELEMENT field
     moved = false;
     if (player->right != nullptr) {
         // Switch positions.
-        const wchar_t shape = player->shape;
+        const cchar_t shape = player->shape;
         const short color_pair = player->color_pair;
 
         player->shape = player->right->shape;
@@ -357,38 +363,52 @@ void draw_game_screen(const int game_x_length, const int game_y_length, const in
         game_window = nullptr;
     }
 
-    // Win is the parent. Height, width, x, y
+    // Win is the parent. Height, width, x, y +2 for border.
     if (game_window == nullptr) {
-        game_window = subwin(win, game_x_length + 2, game_y_length + 4, pos_x, pos_y);
-        score_window = subwin(win, score_x_length, score_y_length + 4, pos_x + game_x_length + 2, pos_y);
+        // X are lines
+        // Y are columns
+        game_window = subwin(win, game_x_length + 2, game_y_length + 2, pos_x, pos_y);
+        score_window = subwin(win, score_x_length + 2, score_y_length + 2, pos_x + game_x_length + 2, pos_y);
         // Add border with color.
         set_current_color(game_window, border_color);
         box(game_window, 0, 0);
         set_current_color(game_window, DEFAULT_BORDER_COLOR);
-    }
 
-    wclear(score_window);
-    set_current_color(score_window, score_border_color);
-    box(score_window, 0, 0);
-    set_current_color(score_window, DEFAULT_BORDER_COLOR);
+        set_current_color(score_window, score_border_color);
+        box(score_window, 0, 0);
+        set_current_color(score_window, DEFAULT_BORDER_COLOR);
+    }
 
     // These coordinates are relative to the new window.
     for (int i = 0; i < game_x_length; i++) {
         for (int j = 0; j < game_y_length; j++) {
             set_current_color(game_window, area[i][j].color_pair);
             if (id) {
-                // TODO HERE THE SCREEN IS TWO CHARS WIDER
                 mvwprintw(game_window, i+1, j+2, "%lu ", area[i][j].id);
             } else {
-                mvwaddch(game_window, i+1, j+1, area[i][j].shape);
+                // todo why is this not printing anything?
+                //mvwadd_wch(game_window, i+1, j+1, &area[i][j].shape);
+                mvwadd_wch(game_window, i+1, j+1, &area[i][j].shape);
             }
         }
     }
 
-    set_current_color(score_window, score_color);
-    char *part;
-    char *str = strdup(score);
+    // Blank the score box without wclear which flickers the screen.
+    char blank[score_y_length] = {};
+    for (int i = 0; i < score_y_length; i++) {
+        blank[i] = ' ';
+    }
+    blank[score_y_length-1] = '\0';
     int line = 1;
+    for (int i = 0; i < score_x_length; i++) {
+        mvwprintw(score_window, line, 2, "%s", blank);
+    }
+
+    char *part;
+    // strsep is destructive, it needs a read write memory not a static string.
+    char *str = strdup(score);
+    line = 1;
+    set_current_color(score_window, score_color);
     while ((part = strsep(&str,"\n")) != NULL) {
         mvwprintw(score_window, line, 2, "%s", part);
         line++;
@@ -541,6 +561,8 @@ void set_score_border_color(const short color_pair_number) {
 }
 
 void start() {
+    set_player_character('0');
+    setcchar(&c_player_character, &w_player_character, 0, 0, nullptr);
     // Init ncurses.
     if ((win = initscr()) == NULL ) {
         fprintf(stderr, "Error initialising ncurses.\n");
