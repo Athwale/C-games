@@ -561,6 +561,7 @@ void set_score_border_color(const short color_pair_number) {
 }
 
 void start() {
+    setlocale(LC_ALL, "");
     set_player_character('0');
     setcchar(&c_player_character, &w_player_character, 0, 0, nullptr);
     // Init ncurses.

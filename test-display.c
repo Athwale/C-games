@@ -6,8 +6,6 @@
 
 #define SIZE 10
 #define WALL L'\u2588'
-#define WALL L'Ƿ'
-//#define WALL L'#'
 
 int main(void) {
     // Test functionality.

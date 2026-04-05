@@ -1,14 +1,15 @@
-#include <ncurses.h>
+#define _XOPEN_SOURCE_EXTENDED
+#include <ncursesw/ncurses.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-#include <wchar.h>
 #include <locale.h>
 
 #include "display.h"
 
 // 54 max.
-#define SIZE 30
+#define SIZE 10
+#define SCORE_BOX_HEIGHT 3
 #define WALL L'\u2588'
 #define EMPTY ' '
 #define PLAYER '0'
@@ -132,7 +133,7 @@ int main() {
         return 0;
     }
 
-    draw_game_screen(SIZE, SIZE, 5, SIZE, field, "Building", 1,
+    draw_game_screen(SIZE, SIZE, SCORE_BOX_HEIGHT, SIZE, field, "Building", 1,
         false);
 
     while (stop_counter >= 0) {
@@ -184,7 +185,7 @@ int main() {
             }
         }
         usleep(1000);
-        draw_game_screen(SIZE, SIZE, 5, SIZE, field, "Building", 1,
+        draw_game_screen(SIZE, SIZE, SCORE_BOX_HEIGHT, SIZE, field, "Building", 1,
             false);
         stop_counter--;
     }
@@ -229,7 +230,7 @@ int main() {
                     }
                 }
                 usleep(1000);
-                draw_game_screen(SIZE, SIZE, 5, SIZE, field,
+                draw_game_screen(SIZE, SIZE, SCORE_BOX_HEIGHT, SIZE, field,
                     "Checking", 1, false);
             }
         }
@@ -257,7 +258,7 @@ int main() {
     finish_location->shape = END;
     finish_location->color_pair = finish_color;
 
-    draw_game_screen(SIZE, SIZE, 5, SIZE, field,
+    draw_game_screen(SIZE, SIZE, SCORE_BOX_HEIGHT, SIZE, field,
         "Ready.\nWSAD to move, Q to quit.\nSteps: 0", 0, false);
     // todo changes on resize, call after each draw screen?
     game_area = get_play_area_window();
@@ -315,8 +316,6 @@ int main() {
             steps++;
         }
         draw_game_screen(SIZE, SIZE, 5, SIZE, field, "Steps", steps, false);
-        // todo edges are not accessible. The screen is 2 chars wider.
-        mvwaddch(game_area, 1, 1, 'T');
     }
 
     if (win) {
