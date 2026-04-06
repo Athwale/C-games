@@ -10,14 +10,15 @@
 // 54 max.
 #define SIZE 10
 #define SCORE_BOX_HEIGHT 3
-#define WALL L'\u2588'
-#define EMPTY ' '
-#define PLAYER '0'
-#define END 'O'
 
 ELEMENT *player_location = nullptr;
 ELEMENT *finish_location = nullptr;
 WINDOW *game_area= nullptr;
+
+wchar_t wall = L'\u2588';
+wchar_t empty = ' ';
+wchar_t player = L'\u263A';
+wchar_t finish = L'\u0298';
 
 bool insert_node(const int length, ELEMENT *nodes[length], ELEMENT *node) {
     int i = 0;
@@ -33,29 +34,35 @@ bool insert_node(const int length, ELEMENT *nodes[length], ELEMENT *node) {
     return false;
 }
 
+bool compare_cchar(const cchar_t c1, const wchar_t c2) {
+    wchar_t c1_extract;
+    getcchar(&c1, &c1_extract, nullptr, nullptr, nullptr);
+    return c1_extract == c2;
+}
+
 int count_empty_neighbors(const ELEMENT *block) {
-    int empty = 0;
+    int n_of_empty = 0;
     if (block->top != nullptr) {
-        if (block->top->shape == EMPTY) {
-            empty++;
+        if (compare_cchar(block->top->shape, empty)) {
+            n_of_empty++;
         }
     }
     if (block->left != nullptr) {
-        if (block->left->shape == EMPTY) {
-            empty++;
+        if (compare_cchar(block->left->shape, empty)) {
+            n_of_empty++;
         }
     }
     if (block->right != nullptr) {
-        if (block->right->shape == EMPTY) {
-            empty++;
+        if (compare_cchar(block->right->shape, empty)) {
+            n_of_empty++;
         }
     }
     if (block->bottom != nullptr) {
-        if (block->bottom->shape == EMPTY) {
-            empty++;
+        if (compare_cchar(block->bottom->shape, empty)) {
+            n_of_empty++;
         }
     }
-    return empty;
+    return n_of_empty;
 }
 
 ELEMENT* get_neighbor(const ELEMENT *block, const short direction) {
@@ -105,7 +112,7 @@ int main() {
     set_score_border_color(score_border_color);
 
     ELEMENT field[SIZE][SIZE];
-    init_grid(SIZE, SIZE, field, WALL, field_color);
+    init_grid(SIZE, SIZE, field, wall, field_color);
 
     // Init rand function.
     srand(time(nullptr));
@@ -113,7 +120,8 @@ int main() {
     int start_pos_y = rand() % SIZE;
 
     // Set starting position.
-    field[start_pos_x][start_pos_y].shape = EMPTY;
+    setcchar(&field[start_pos_x][start_pos_y].shape, &wall, 0, 0, nullptr);
+
     int counter = 0;
     int starting_position = 0;
     int stop_counter = (SIZE * SIZE) * 3;
@@ -164,8 +172,8 @@ int main() {
             }
             continue;
         } if (next != nullptr) {
-            if (next->shape != EMPTY) {
-                next->shape = EMPTY;
+            if (compare_cchar(next->shape, empty) == false) {
+                setcchar(&next->shape, &empty, 0, 0, nullptr);
 
                 // Save the removed block into list.
                 counter++;
@@ -201,30 +209,31 @@ int main() {
     const int top = counter;
     counter = 1;
     int discovered = 0;
+    wchar_t marker = '+';
 
     for (int j =0; j<top; j++) {
         discovered = 0;
         for (int i = 0; i < counter; i++) {
-            if (nodes[i] != nullptr && nodes[i]->shape != '+' && nodes[i]->shape != WALL) {
-                nodes[i]->shape = '+';
+            if (nodes[i] != nullptr && compare_cchar(nodes[i]->shape, marker) == false && compare_cchar(nodes[i]->shape, wall) == false) {
+                setcchar(&nodes[i]->shape, &marker, 0, 0, nullptr);
                 nodes[i]->color_pair = search_color;
                 // Save all empty neighbors to nodes.
-                if (nodes[i]->top != nullptr && nodes[i]->top->shape != '+') {
+                if (nodes[i]->top != nullptr && compare_cchar(nodes[i]->top->shape, marker) == false) {
                     if (insert_node(SIZE * SIZE, nodes, nodes[i]->top)) {
                         discovered++;
                     }
                 }
-                if (nodes[i]->left != nullptr && nodes[i]->left->shape != '+') {
+                if (nodes[i]->left != nullptr && compare_cchar(nodes[i]->left->shape, marker) == false) {
                     if (insert_node(SIZE * SIZE, nodes, nodes[i]->left)) {
                         discovered++;
                     }
                 }
-                if (nodes[i]->right != nullptr && nodes[i]->right->shape != '+') {
+                if (nodes[i]->right != nullptr && compare_cchar(nodes[i]->right->shape, marker) == false) {
                     if (insert_node(SIZE * SIZE, nodes, nodes[i]->right)) {
                         discovered++;
                     }
                 }
-                if (nodes[i]->bottom != nullptr && nodes[i]->bottom->shape != '+') {
+                if (nodes[i]->bottom != nullptr && compare_cchar(nodes[i]->bottom->shape, marker) == false) {
                     if (insert_node(SIZE * SIZE, nodes, nodes[i]->bottom)) {
                         discovered++;
                     }
@@ -239,23 +248,24 @@ int main() {
     // todo place finish and breath search if accessible.
     // todo add score
 
+    // Clear the markers.
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
-            if (field[i][j].shape == '+') {
-                field[i][j].shape = EMPTY;
+            if (compare_cchar(field[i][j].shape, marker)) {
+                setcchar(&field[i][j].shape, &empty, 0, 0, nullptr);
             }
         }
     }
 
     // Place player once ready.
     player_location = &field[0][0];
-    player_location->shape = PLAYER;
+    setcchar(&player_location->shape, &player, 0, 0, nullptr);
     player_location->color_pair = player_color;
-    set_player_character(PLAYER);
+    set_player_character(player);
 
     // Place finish.
     finish_location = &field[SIZE-1][SIZE-1];
-    finish_location->shape = END;
+    setcchar(&finish_location->shape, &finish, 0, 0, nullptr);
     finish_location->color_pair = finish_color;
 
     draw_game_screen(SIZE, SIZE, SCORE_BOX_HEIGHT, SIZE, field,
@@ -274,28 +284,28 @@ int main() {
         keyboard_input = wgetch(game_area);
         switch (keyboard_input) {
             case 'w':
-                if (player_location->top != nullptr && player_location->top->shape == WALL) {
+                if (player_location->top != nullptr && compare_cchar(player_location->top->shape, wall)) {
                     break;
                 }
                 player_location = move_player_up(SIZE, SIZE, field);
                 break;
 
             case 's':
-                if (player_location->bottom != nullptr && player_location->bottom->shape == WALL) {
+                if (player_location->bottom != nullptr && compare_cchar(player_location->bottom->shape, wall)) {
                     break;
                 }
                 player_location = move_player_down(SIZE, SIZE, field);
                 break;
 
             case 'a':
-                if (player_location->left != nullptr && player_location->left->shape == WALL) {
+                if (player_location->left != nullptr && compare_cchar(player_location->left->shape, wall)) {
                     break;
                 }
                 player_location = move_player_left(SIZE, SIZE, field);
                 break;
 
             case 'd':
-                if (player_location->right != nullptr && player_location->right->shape == WALL) {
+                if (player_location->right != nullptr && compare_cchar(player_location->right->shape, wall)) {
                     break;
                 }
                 player_location = move_player_right(SIZE, SIZE, field);
