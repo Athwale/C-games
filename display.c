@@ -35,6 +35,7 @@ bool player_moved() {
 
 void set_player_character(const wchar_t character) {
     w_player_character = character;
+    setcchar(&c_player_character, &w_player_character, 0, 0, nullptr);
 }
 
 void init_grid(const int x_length, const int y_length, ELEMENT field[x_length][y_length], const wchar_t background_char, const short color) {
@@ -228,9 +229,12 @@ WINDOW *get_play_area_window()
 }
 
 static ELEMENT* find_player(const int x_length, const int y_length, ELEMENT field[x_length][y_length]) {
-    wchar_t player_ch;
-    wchar_t shape_ch;
-    getcchar(&c_player_character, &player_ch, nullptr, nullptr, nullptr);
+    wchar_t wbuf[CCHARW_MAX] = {};
+    attr_t attrs;
+    short color_pair;
+
+    getcchar(&c_player_character, wbuf, &attrs, &color_pair, nullptr);
+    const wchar_t player_ch = wbuf[0];
     if (player_ch == '\0') {
         end();
         fprintf(stderr,"Player character is not set.\n");
@@ -241,7 +245,8 @@ static ELEMENT* find_player(const int x_length, const int y_length, ELEMENT fiel
     ELEMENT *player = nullptr;
     for (int x = 0; x < x_length; x++) {
         for (int y = 0; y < y_length; y++) {
-            getcchar(&field[x][y].shape, &shape_ch, nullptr, nullptr, nullptr);
+            getcchar(&field[x][y].shape, wbuf, &attrs, &color_pair, nullptr);
+            const wchar_t shape_ch = wbuf[0];
             if (shape_ch == player_ch) {
                 player = &field[x][y];
             }
@@ -386,8 +391,6 @@ void draw_game_screen(const int game_x_length, const int game_y_length, const in
             if (id) {
                 mvwprintw(game_window, i+1, j+2, "%lu ", area[i][j].id);
             } else {
-                // todo why is this not printing anything?
-                //mvwadd_wch(game_window, i+1, j+1, &area[i][j].shape);
                 mvwadd_wch(game_window, i+1, j+1, &area[i][j].shape);
             }
         }

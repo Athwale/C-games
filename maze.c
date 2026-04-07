@@ -8,7 +8,7 @@
 #include "display.h"
 
 // 54 max.
-#define SIZE 10
+#define SIZE 54
 #define SCORE_BOX_HEIGHT 3
 
 ELEMENT *player_location = nullptr;
@@ -35,9 +35,16 @@ bool insert_node(const int length, ELEMENT *nodes[length], ELEMENT *node) {
 }
 
 bool compare_cchar(const cchar_t c1, const wchar_t c2) {
-    wchar_t c1_extract;
-    getcchar(&c1, &c1_extract, nullptr, nullptr, nullptr);
-    return c1_extract == c2;
+    wchar_t wbuf[CCHARW_MAX] = {};
+    attr_t attrs;
+    short color_pair;
+
+    if (getcchar(&c1, wbuf, &attrs, &color_pair, nullptr) == ERR) {
+        return false;
+    }
+
+    // Compare the first wide character in the buffer to c2
+    return wbuf[0] == c2;
 }
 
 int count_empty_neighbors(const ELEMENT *block) {
@@ -126,7 +133,7 @@ int main() {
     int starting_position = 0;
     int stop_counter = (SIZE * SIZE) * 3;
 
-    // List of removed blocks. // todo free the array when done.
+    // List of removed blocks.
     ELEMENT *ptr = calloc(1, sizeof(ELEMENT));
     ptr[counter] = field[start_pos_x][start_pos_y];
     const ELEMENT *current_position = &ptr[starting_position];
@@ -192,7 +199,7 @@ int main() {
                 current_position = next;
             }
         }
-        usleep(1000);
+        usleep(300);
         draw_game_screen(SIZE, SIZE, SCORE_BOX_HEIGHT, SIZE, field, "Building", 1,
             false);
         stop_counter--;
@@ -200,16 +207,17 @@ int main() {
     free(ptr);
     ptr = nullptr;
 
+    // todo handle no path found.
+
     // Search if the finish is reachable from the start.
     // todo size must be the amount of free spaces but would have to be dynamic.
-    // todo check if we have reached the end.
     ELEMENT *nodes[SIZE * SIZE] = {};
     nodes[0] = &field[0][0];
     // This the number of empty spaces.
     const int top = counter;
     counter = 1;
     int discovered = 0;
-    wchar_t marker = '+';
+    constexpr wchar_t marker = '+';
 
     for (int j =0; j<top; j++) {
         discovered = 0;
@@ -245,8 +253,6 @@ int main() {
         }
         counter += discovered;
     }
-    // todo place finish and breath search if accessible.
-    // todo add score
 
     // Clear the markers.
     for (int i = 0; i < SIZE; i++) {
@@ -325,6 +331,7 @@ int main() {
         if (player_moved()) {
             steps++;
         }
+        // todo step counter is not working.
         draw_game_screen(SIZE, SIZE, 5, SIZE, field, "Steps", steps, false);
     }
 
