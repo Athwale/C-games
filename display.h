@@ -22,7 +22,7 @@ typedef struct element {
 } ELEMENT;
 
 static void set_current_color(WINDOW *window, short color);
-void draw_game_screen(int game_x_length, int game_y_length, int score_x_length, int score_y_length, const ELEMENT area[game_x_length][game_y_length], char score[], int value, bool id);
+void draw_game_screen(int game_x_length, int game_y_length, int score_x_length, int score_y_length, const ELEMENT area[game_x_length][game_y_length], char score[], bool id);
 int draw_menu(int count, char **items, int selected);
 void draw_end_screen(int score);
 short add_color(short foreground, short background);
@@ -41,3 +41,4 @@ ELEMENT* move_player_right(int x_length, int y_length, ELEMENT field[x_length][y
 WINDOW *get_play_area_window();
 void debug_print_grid(int x_length, int y_length, ELEMENT field[x_length][y_length]);
 bool player_moved();
+void draw_warning_screen(const char *message);
