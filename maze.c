@@ -8,8 +8,8 @@
 #include "display.h"
 
 // 54 max.
-#define SIZE 54
-#define SCORE_BOX_HEIGHT 3
+#define SIZE 30
+#define SCORE_BOX_HEIGHT 4
 
 ELEMENT *player_location = nullptr;
 ELEMENT *finish_location = nullptr;
@@ -104,6 +104,7 @@ int main() {
     setlocale(LC_ALL, "");
     int keyboard_input = '\0';
     int steps = 0;
+    char steps_string[50];
 
     start();
     const short border_color = add_color(COLOR_RED, -1);
@@ -148,8 +149,8 @@ int main() {
         return 0;
     }
 
-    draw_game_screen(SIZE, SIZE, SCORE_BOX_HEIGHT, SIZE, field, "Building", 1,
-        false);
+    draw_game_screen(SIZE, SIZE, SCORE_BOX_HEIGHT, SIZE, field,
+        "Building", false);
 
     while (stop_counter >= 0) {
         short random_direction = 0;
@@ -200,14 +201,17 @@ int main() {
             }
         }
         usleep(300);
-        draw_game_screen(SIZE, SIZE, SCORE_BOX_HEIGHT, SIZE, field, "Building", 1,
-            false);
+        draw_game_screen(SIZE, SIZE, SCORE_BOX_HEIGHT, SIZE, field,
+            "Building", false);
         stop_counter--;
     }
     free(ptr);
     ptr = nullptr;
 
-    // todo handle no path found.
+    // Place finish.
+    finish_location = &field[SIZE-1][SIZE-1];
+    setcchar(&finish_location->shape, &finish, 0, 0, nullptr);
+    finish_location->color_pair = finish_color;
 
     // Search if the finish is reachable from the start.
     // todo size must be the amount of free spaces but would have to be dynamic.
@@ -218,6 +222,7 @@ int main() {
     counter = 1;
     int discovered = 0;
     constexpr wchar_t marker = '+';
+    bool exit_found = false;
 
     for (int j =0; j<top; j++) {
         discovered = 0;
@@ -246,12 +251,39 @@ int main() {
                         discovered++;
                     }
                 }
+
+                // Check if we found the exit.
+                if (nodes[i]->right != nullptr && compare_cchar(nodes[i]->right->shape, finish) == true) {
+                    exit_found = true;
+                }
+                if (nodes[i]->bottom != nullptr && compare_cchar(nodes[i]->bottom->shape, finish) == true) {
+                    exit_found = true;
+                }
+
                 usleep(1000);
-                draw_game_screen(SIZE, SIZE, SCORE_BOX_HEIGHT, SIZE, field,
-                    "Checking", 1, false);
+                draw_game_screen(SIZE, SIZE, SCORE_BOX_HEIGHT, SIZE,
+                    field, "Checking", false);
             }
         }
         counter += discovered;
+    }
+    // Finish will be destroyed by the search.
+    setcchar(&finish_location->shape, &finish, 0, 0, nullptr);
+    finish_location->color_pair = finish_color;
+
+    if (exit_found) {
+        draw_game_screen(SIZE, SIZE, SCORE_BOX_HEIGHT, SIZE, field,
+            "Exit accessible", false);
+        sleep(1);
+    }
+
+    if (!exit_found) {
+        draw_game_screen(SIZE, SIZE, SCORE_BOX_HEIGHT, SIZE, field,
+            "Exit not found", false);
+        sleep(1);
+        draw_warning_screen("Exit inaccessible.");
+        end();
+        exit(1);
     }
 
     // Clear the markers.
@@ -269,14 +301,9 @@ int main() {
     player_location->color_pair = player_color;
     set_player_character(player);
 
-    // Place finish.
-    finish_location = &field[SIZE-1][SIZE-1];
-    setcchar(&finish_location->shape, &finish, 0, 0, nullptr);
-    finish_location->color_pair = finish_color;
-
     draw_game_screen(SIZE, SIZE, SCORE_BOX_HEIGHT, SIZE, field,
-        "Ready.\nWSAD to move, Q to quit.\nSteps: 0", 0, false);
-    // todo changes on resize, call after each draw screen?
+        "Ready.\nWSAD to move\nQ to quit.\nSteps: 0", false);
+    // todo changes on resize, call after each draw screen? segfault when resized too small.
     game_area = get_play_area_window();
     if (game_area == nullptr) {
         end();
@@ -331,8 +358,9 @@ int main() {
         if (player_moved()) {
             steps++;
         }
-        // todo step counter is not working.
-        draw_game_screen(SIZE, SIZE, 5, SIZE, field, "Steps", steps, false);
+        snprintf(steps_string, 50, "Steps: %d", steps);
+        draw_game_screen(SIZE, SIZE, 5, SIZE, field, steps_string,
+            false);
     }
 
     if (win) {
