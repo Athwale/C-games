@@ -13,7 +13,7 @@ WINDOW *win; // Main screen, whole terminal
 WINDOW *game_window; // Playing field
 WINDOW *score_window; // Score field
 WINDOW *menu; // Menu window
-WINDOW *endscreen; // Menu window
+WINDOW *info_screen; // Menu window
 
 short registered_colors = 0;
 short score_color = 0;
@@ -224,7 +224,6 @@ static void terminal_too_small() {
 
 WINDOW *get_play_area_window()
 {
-    // todo changes on terminal resize!
     return game_window;
 }
 
@@ -339,7 +338,7 @@ ELEMENT* move_player_right(const int x_length, const int y_length, ELEMENT field
 // x_length - vertical
 // y_length - horizontal
 void draw_game_screen(const int game_x_length, const int game_y_length, const int score_x_length,
-    const int score_y_length, const ELEMENT area[game_x_length][game_y_length], char score[], const int value, bool id) {
+    const int score_y_length, const ELEMENT area[game_x_length][game_y_length], char score[], bool id) {
     if (!initialized) {
         fprintf(stderr,"start() must be called first\n");
         exit(EXIT_FAILURE);
@@ -403,8 +402,9 @@ void draw_game_screen(const int game_x_length, const int game_y_length, const in
     }
     blank[score_y_length-1] = '\0';
     int line = 1;
-    for (int i = 0; i < score_x_length; i++) {
+    for (int i = 0; i < score_x_length-1; i++) {
         mvwprintw(score_window, line, 2, "%s", blank);
+        line++;
     }
 
     char *part;
@@ -424,6 +424,8 @@ void draw_game_screen(const int game_x_length, const int game_y_length, const in
     wrefresh(score_window);
     refresh();
 }
+
+// todo add optional side screen.
 
 int draw_menu(const int count, char **items, int selected) {
     if (!initialized) {
@@ -504,21 +506,48 @@ void draw_end_screen(const int score) {
     // Horizontal position:
     const int pos_y = COLS / 2 - (int)strlen(message) / 2;
     // Win is the parent. Height, width, x, y
-    endscreen = subwin(win, 4, (int)strlen(message) + 2, pos_x, pos_y);
-    box(endscreen, 0, 0);
-    keypad(endscreen, TRUE);
+    info_screen = subwin(win, 4, (int)strlen(message) + 2, pos_x, pos_y);
+    wclear(info_screen);
+    box(info_screen, 0, 0);
+    keypad(info_screen, TRUE);
 
-    mvwaddstr(endscreen, 1, 1, message);
-    mvwaddstr(endscreen, 2, 1, "Press any key");
+    mvwaddstr(info_screen, 1, 1, message);
+    mvwaddstr(info_screen, 2, 1, "Press any key");
 
     wrefresh(game_window);
     wrefresh(score_window);
-    wrefresh(endscreen);
+    wrefresh(info_screen);
     refresh();
-    wgetch(endscreen);
+    wgetch(info_screen);
 
-    wclear(endscreen);
-    delwin(endscreen);
+    wclear(info_screen);
+    delwin(info_screen);
+}
+
+void draw_warning_screen(const char *message) {
+    if (!initialized) {
+        fprintf(stderr,"start() must be called first\n");
+        exit(EXIT_FAILURE);
+    }
+
+    const int pos_x = LINES / 2 - 2;
+    const int pos_y = COLS / 2 - (int)strlen(message) / 2;
+    info_screen = subwin(win, 4, (int)strlen(message) + 2, pos_x, pos_y);
+    wclear(info_screen);
+    box(info_screen, 0, 0);
+    keypad(info_screen, TRUE);
+
+    mvwaddstr(info_screen, 1, 1, message);
+    mvwaddstr(info_screen, 2, 1, "Press any key");
+
+    wrefresh(game_window);
+    wrefresh(score_window);
+    wrefresh(info_screen);
+    refresh();
+    wgetch(info_screen);
+
+    wclear(info_screen);
+    delwin(info_screen);
 }
 
 short add_color(const short foreground, const short background) {
