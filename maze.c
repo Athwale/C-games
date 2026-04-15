@@ -303,7 +303,6 @@ int main() {
 
     draw_game_screen(SIZE, SIZE, SCORE_BOX_HEIGHT, SIZE, field,
         "Ready.\nWSAD to move\nQ to quit.\nSteps: 0", false);
-    // todo changes on resize, call after each draw screen? segfault when resized too small.
     game_area = get_play_area_window();
     if (game_area == nullptr) {
         end();
